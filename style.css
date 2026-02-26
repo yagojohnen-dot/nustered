@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Olá Mundo Estilizado</title>
+    <style>
+        /* O CSS começa aqui */
+        body {
+            background-color: #f0f2f5; /* Cor de fundo suave */
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center; /* Centraliza horizontalmente */
+            align-items: center;     /* Centraliza verticalmente */
+            height: 100vh;           /* Usa toda a altura da tela */
+            margin: 0;
+        }
+
+        .cartao {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        h1 {
+            color: #2563eb; /* Azul moderno */
+            margin-bottom: 10px;
+        }
+
+        p {
+            color: #4b5563; /* Cinza escuro */
+            font-size: 1.1rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="cartao">
+        <h1>Olá, Mundo!</h1>
+        <p>Este site agora tem estilo.</p>
+    </div>
+
+</body>
+</html>
