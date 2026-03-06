@@ -1,116 +1,137 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <title>Space Shooter CSS</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <title>Jogo de Zumbi</title>
+  <style>
+    body {
+      margin: 0;
+      background-color: #111;
+      color: white;
+      font-family: Arial, sans-serif;
+      overflow: hidden;
+    }
+
+    canvas {
+      display: block;
+      background-color: #222;
+      margin: 0 auto;
+    }
+  </style>
 </head>
 <body>
-    <div class="game-container">
-        <div class="score-board">
-            Pontos: <span class="score"></span>
-        </div>
+  <canvas id="gameCanvas" width="800" height="600"></canvas>
 
-        <input type="checkbox" id="t1"><label for="t1" class="target t1"></label>
-        <input type="checkbox" id="t2"><label for="t2" class="target t2"></label>
-        <input type="checkbox" id="t3"><label for="t3" class="target t3"></label>
-        <input type="checkbox" id="t4"><label for="t4" class="target t4"></label>
-        <input type="checkbox" id="t5"><label for="t5" class="target t5"></label>
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
 
-        <div class="win-message">MISSÃO CUMPRIDA!</div>
-    </div>
+    // Jogador
+    const player = {
+      x: canvas.width / 2,
+      y: canvas.height / 2,
+      width: 40,
+      height: 40,
+      speed: 5,
+      color: "blue"
+    };
+
+    // Tiros
+    const bullets = [];
+
+    // Zumbis
+    const zombies = [];
+    const zombieCount = 5;
+
+    for (let i = 0; i < zombieCount; i++) {
+      zombies.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        width: 40,
+        height: 40,
+        speed: 1,
+        color: "green"
+      });
+    }
+
+    // Controles do jogador
+    const keys = {};
+    document.addEventListener("keydown", (e) => keys[e.key] = true);
+    document.addEventListener("keyup", (e) => keys[e.key] = false);
+
+    // Atirar com espaço
+    document.addEventListener("keydown", (e) => {
+      if (e.key === " ") {
+        bullets.push({ x: player.x + player.width/2 - 5, y: player.y, width: 10, height: 10, speed: 7 });
+      }
+    });
+
+    function update() {
+      // Movimentação do jogador
+      if (keys["ArrowUp"]) player.y -= player.speed;
+      if (keys["ArrowDown"]) player.y += player.speed;
+      if (keys["ArrowLeft"]) player.x -= player.speed;
+      if (keys["ArrowRight"]) player.x += player.speed;
+
+      // Limitar jogador na tela
+      player.x = Math.max(0, Math.min(canvas.width - player.width, player.x));
+      player.y = Math.max(0, Math.min(canvas.height - player.height, player.y));
+
+      // Atualizar tiros
+      for (let i = bullets.length - 1; i >= 0; i--) {
+        bullets[i].y -= bullets[i].speed;
+        if (bullets[i].y < 0) bullets.splice(i, 1);
+      }
+
+      // Atualizar zumbis
+      zombies.forEach(zombie => {
+        const dx = player.x - zombie.x;
+        const dy = player.y - zombie.y;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        zombie.x += (dx/dist) * zombie.speed;
+        zombie.y += (dy/dist) * zombie.speed;
+      });
+
+      // Checar colisão dos tiros com zumbis
+      for (let i = zombies.length - 1; i >= 0; i--) {
+        for (let j = bullets.length - 1; j >= 0; j--) {
+          const z = zombies[i];
+          const b = bullets[j];
+          if (b.x < z.x + z.width && b.x + b.width > z.x &&
+              b.y < z.y + z.height && b.y + b.height > z.y) {
+            zombies.splice(i, 1);
+            bullets.splice(j, 1);
+            break;
+          }
+        }
+      }
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Desenhar jogador
+      ctx.fillStyle = player.color;
+      ctx.fillRect(player.x, player.y, player.width, player.height);
+
+      // Desenhar tiros
+      ctx.fillStyle = "yellow";
+      bullets.forEach(b => ctx.fillRect(b.x, b.y, b.width, b.height));
+
+      // Desenhar zumbis
+      zombies.forEach(z => {
+        ctx.fillStyle = z.color;
+        ctx.fillRect(z.x, z.y, z.width, z.height);
+      });
+    }
+
+    function gameLoop() {
+      update();
+      draw();
+      requestAnimationFrame(gameLoop);
+    }
+
+    gameLoop();
+  </script>
 </body>
 </html>
-/* style.css */
-body {
-    margin: 0;
-    background: #050505;
-    color: white;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    cursor: crosshair;
-    overflow: hidden;
-    /* Inicializa o contador de pontos */
-    counter-reset: score;
-}
-
-.game-container {
-    width: 100vw;
-    height: 100vh;
-    position: relative;
-    background-image: radial-gradient(white 1%, transparent 1%);
-    background-size: 50px 50px; /* Efeito de estrelas */
-}
-
-/* Esconde os checkboxes reais */
-input[type="checkbox"] {
-    display: none;
-}
-
-/* O Alvo */
-.target {
-    position: absolute;
-    width: 50px;
-    height: 50px;
-    background: #00ffcc;
-    border: 4px solid #fff;
-    border-radius: 50%;
-    box-shadow: 0 0 20px #00ffcc;
-    transition: transform 0.2s;
-    z-index: 2;
-}
-
-/* Quando clicar no alvo (tiro certeiro) */
-input:checked + .target {
-    display: none;
-    counter-increment: score; /* Aumenta a pontuação */
-}
-
-/* Exibição da Pontuação */
-.score::after {
-    content: counter(score);
-    font-size: 30px;
-    font-weight: bold;
-}
-
-.score-board {
-    position: absolute;
-    top: 20px;
-    left: 20px;
-    padding: 10px 20px;
-    border: 2px solid #00ffcc;
-    background: rgba(0, 255, 204, 0.1);
-}
-
-/* Animações dos Alvos */
-@keyframes fly1 {
-    0% { top: 10%; left: -10%; }
-    100% { top: 80%; left: 110%; }
-}
-
-@keyframes fly2 {
-    0% { top: 90%; left: 110%; }
-    100% { top: 20%; left: -10%; }
-}
-
-.t1 { animation: fly1 5s infinite linear; }
-.t2 { animation: fly2 7s infinite linear; animation-delay: 1s; }
-.t3 { animation: fly1 4s infinite reverse; animation-delay: 2s; }
-.t4 { animation: fly2 6s infinite alternate; }
-.t5 { animation: fly1 3s infinite linear; animation-delay: 0.5s; }
-
-/* Mensagem de Vitória quando todos os 5 forem marcados */
-.win-message {
-    display: none;
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 50px;
-    color: #00ffcc;
-    text-shadow: 0 0 20px #00ffcc;
-}
-
-/* Seletor mágico: se 5 checkboxes estiverem marcados, mostre a vitória */
-input:checked + .target + input:checked + .target + input:checked + .target + input:checked + .target + input:checked + .target ~ .win-message {
-    display: block;
-}
