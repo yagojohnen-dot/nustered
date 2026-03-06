@@ -1,1 +1,130 @@
-<!DOCTYPE html> <html lang="pt-br"> <head>     <meta charset="UTF-8">     <meta name="viewport" content="width=device-width, initial-scale=1.0">     <title>Corinthians - Edição Espacial</title>     <style>         body {             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;             margin: 0;             padding: 0;             color: #fff;             /* Fundo preto com efeito de estrelas via CSS */             background-color: #000;             background-image:                  radial-gradient(white, rgba(255,255,255,.2) 2px, transparent 40px),                 radial-gradient(white, rgba(255,255,255,.15) 1px, transparent 30px),                 radial-gradient(white, rgba(255,255,255,.1) 2px, transparent 20px);             background-size: 550px 550px, 350px 350px, 250px 250px;             background-position: 0 0, 40px 60px, 130px 270px;         }          header {             background-color: rgba(0, 0, 0, 0.8);             border-bottom: 2px solid #333;             padding: 2rem;             text-align: center;         }          .container {             max-width: 800px;             margin: 50px auto;             padding: 30px;             background: rgba(255, 255, 255, 0.05); /* Fundo translúcido */             backdrop-filter: blur(5px); /* Efeito de vidro fosco */             border-radius: 15px;             border: 1px solid rgba(255, 255, 255, 0.1);             box-shadow: 0 10px 30px rgba(0,0,0,0.5);             text-align: center;         }          h2 {             color: #fff;             text-transform: uppercase;             letter-spacing: 2px;         }          /* Botão estilizado para o Corinthians */         .botao-corinthians {             display: inline-block;             background-color: #fff;             color: #000;             padding: 15px 30px;             text-decoration: none;             border-radius: 50px;             font-weight: bold;             font-size: 1.1rem;             transition: all 0.3s ease;             border: 2px solid transparent;             margin-top: 20px;         }          .botao-corinthians:hover {             background-color: #000;             color: #fff;             border-color: #fff;             transform: scale(1.05);             box-shadow: 0 0 20px rgba(255, 255, 255, 0.4);         }          footer {             text-align: center;             padding: 40px;             font-size: 0.8rem;             color: #888;         }     </style> </head> <body>      <header>         <h1>SCCP - Universo Alvinegro</h1>     </header>      <div class="container">         <h2>Vai Corinthians!</h2>         <p>Explore o site oficial do Timão em uma experiência estelar.</p>                  <a href="https://www.corinthians.com.br" target="_blank" class="botao-corinthians">             ACESSAR SITE OFICIAL         </a>     </div>      <footer>         <p>&copy; 2026 - Template Alvinegro Espacial</p>     </footer>  </body> </html>
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Desafio do Timão</title>
+    <style>
+        /* Fundo Preto com Estrelas */
+        body {
+            margin: 0;
+            padding: 0;
+            background: #000;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: white;
+        }
+
+        /* Gerador de estrelas simples usando box-shadow */
+        .stars {
+            width: 1px;
+            height: 1px;
+            background: transparent;
+            box-shadow: 400px 200px #FFF, 800px 400px #FFF, 1200px 600px #FFF, 200px 800px #FFF, 1500px 100px #FFF, 300px 300px #FFF, 900px 700px #FFF;
+            animation: move-stars 50s linear infinite;
+        }
+
+        @keyframes move-stars {
+            from { transform: translateY(0); }
+            to { transform: translateY(-1000px); }
+        }
+
+        /* Container do Jogo */
+        #game-container {
+            text-align: center;
+            z-index: 10;
+        }
+
+        /* O Gol */
+        .gol {
+            width: 250px;
+            height: 150px;
+            border: 5px solid white;
+            border-bottom: none;
+            margin: 0 auto 50px;
+            position: relative;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* A Bola */
+        #bola {
+            width: 50px;
+            height: 50px;
+            background: white;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            margin: 0 auto;
+            display: block;
+            border: 2px solid #000;
+            box-shadow: 0 0 10px rgba(255,255,255,0.5);
+        }
+
+        /* Botão do Corinthians (Escondido) */
+        #btn-corinthians {
+            display: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #000;
+            background-color: #fff;
+            border: 2px solid #333;
+            border-radius: 5px;
+            text-decoration: none;
+            cursor: pointer;
+            animation: bounce 0.5s infinite alternate;
+        }
+
+        #btn-corinthians:hover {
+            background-color: #ccc;
+        }
+
+        @keyframes bounce {
+            from { transform: scale(1); }
+            to { transform: scale(1.05); }
+        }
+
+        h2 { text-shadow: 2px 2px 4px #000; }
+    </style>
+</head>
+<body>
+
+    <div class="stars"></div>
+
+    <div id="game-container">
+        <h2 id="instrucao">Clique na bola para fazer o gol!</h2>
+        
+        <div class="gol" id="trave"></div>
+        
+        <div id="bola" onclick="chutar()">⚽</div>
+
+        <br>
+        
+        <a href="https://www.corinthians.com.br" id="btn-corinthians" target="_blank">
+            VAI CORINTHIANS! ACESSAR SITE
+        </a>
+    </div>
+
+    <script>
+        function chutar() {
+            const bola = document.getElementById('bola');
+            const instrucao = document.getElementById('instrucao');
+            const botao = document.getElementById('btn-corinthians');
+
+            // Animação de chute (sobe para o gol)
+            bola.style.transform = "translateY(-220px) scale(0.6)";
+            
+            setTimeout(() => {
+                bola.style.display = 'none';
+                instrucao.innerHTML = "GOOOOOL! 🦅";
+                botao.style.display = 'inline-block';
+            }, 500);
+        }
+    </script>
+
+</body>
+</html>
