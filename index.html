@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Jogo de Zumbi</title>
+  <title>Jogo de Zumbi Melhorado</title>
   <style>
     body {
       margin: 0;
@@ -17,14 +17,25 @@
       background-color: #222;
       margin: 0 auto;
     }
+
+    #hud {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 20px;
+      color: white;
+    }
   </style>
 </head>
 <body>
+  <div id="hud">Vida: 100 | Tiros: ∞</div>
   <canvas id="gameCanvas" width="800" height="600"></canvas>
 
   <script>
     const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");
+    const hud = document.getElementById("hud");
 
     // Jogador
     const player = {
@@ -33,7 +44,8 @@
       width: 40,
       height: 40,
       speed: 5,
-      color: "blue"
+      color: "blue",
+      vida: 100
     };
 
     // Tiros
@@ -41,7 +53,7 @@
 
     // Zumbis
     const zombies = [];
-    const zombieCount = 5;
+    const zombieCount = 15; // mais zumbis
 
     for (let i = 0; i < zombieCount; i++) {
       zombies.push({
@@ -49,7 +61,7 @@
         y: Math.random() * canvas.height,
         width: 40,
         height: 40,
-        speed: 1,
+        speed: 1 + Math.random(), // velocidade variada
         color: "green"
       });
     }
@@ -90,6 +102,12 @@
         const dist = Math.sqrt(dx*dx + dy*dy);
         zombie.x += (dx/dist) * zombie.speed;
         zombie.y += (dy/dist) * zombie.speed;
+
+        // Colisão com jogador
+        if (zombie.x < player.x + player.width && zombie.x + zombie.width > player.x &&
+            zombie.y < player.y + player.height && zombie.y + zombie.height > player.y) {
+          player.vida -= 0.5; // perde vida lentamente
+        }
       });
 
       // Checar colisão dos tiros com zumbis
@@ -105,6 +123,9 @@
           }
         }
       }
+
+      // Atualizar HUD
+      hud.textContent = `Vida: ${Math.max(0, Math.floor(player.vida))} | Tiros: ∞`;
     }
 
     function draw() {
@@ -128,7 +149,12 @@
     function gameLoop() {
       update();
       draw();
-      requestAnimationFrame(gameLoop);
+
+      if (player.vida > 0) {
+        requestAnimationFrame(gameLoop);
+      } else {
+        hud.textContent = "Você morreu! F5 para reiniciar.";
+      }
     }
 
     gameLoop();
