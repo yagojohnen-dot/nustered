@@ -2,106 +2,115 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Mini Subway CSS</title>
+    <title>Space Shooter CSS</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="game-container">
-        <div id="player" class="player"></div>
-        <div id="obstacle" class="obstacle"></div>
-        <div class="ground"></div>
+        <div class="score-board">
+            Pontos: <span class="score"></span>
+        </div>
+
+        <input type="checkbox" id="t1"><label for="t1" class="target t1"></label>
+        <input type="checkbox" id="t2"><label for="t2" class="target t2"></label>
+        <input type="checkbox" id="t3"><label for="t3" class="target t3"></label>
+        <input type="checkbox" id="t4"><label for="t4" class="target t4"></label>
+        <input type="checkbox" id="t5"><label for="t5" class="target t5"></label>
+
+        <div class="win-message">MISSÃO CUMPRIDA!</div>
     </div>
-    <p>Pressione <b>Espaço</b> para pular!</p>
-    <script src="script.js"></script>
 </body>
 </html>
 /* style.css */
 body {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 100vh;
     margin: 0;
-    background-color: #f0f0f0;
-    font-family: sans-serif;
+    background: #050505;
+    color: white;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    cursor: crosshair;
+    overflow: hidden;
+    /* Inicializa o contador de pontos */
+    counter-reset: score;
 }
 
 .game-container {
-    width: 600px;
-    height: 200px;
-    border-bottom: 2px solid #555;
-    background-color: #87CEEB; /* Cor do céu */
+    width: 100vw;
+    height: 100vh;
     position: relative;
-    overflow: hidden;
+    background-image: radial-gradient(white 1%, transparent 1%);
+    background-size: 50px 50px; /* Efeito de estrelas */
 }
 
-.player {
+/* Esconde os checkboxes reais */
+input[type="checkbox"] {
+    display: none;
+}
+
+/* O Alvo */
+.target {
+    position: absolute;
     width: 50px;
     height: 50px;
-    background-color: #ff4757;
+    background: #00ffcc;
+    border: 4px solid #fff;
+    border-radius: 50%;
+    box-shadow: 0 0 20px #00ffcc;
+    transition: transform 0.2s;
+    z-index: 2;
+}
+
+/* Quando clicar no alvo (tiro certeiro) */
+input:checked + .target {
+    display: none;
+    counter-increment: score; /* Aumenta a pontuação */
+}
+
+/* Exibição da Pontuação */
+.score::after {
+    content: counter(score);
+    font-size: 30px;
+    font-weight: bold;
+}
+
+.score-board {
     position: absolute;
-    bottom: 0;
-    left: 50px;
-    border-radius: 5px;
+    top: 20px;
+    left: 20px;
+    padding: 10px 20px;
+    border: 2px solid #00ffcc;
+    background: rgba(0, 255, 204, 0.1);
 }
 
-.obstacle {
-    width: 20px;
-    height: 40px;
-    background-color: #2f3542;
+/* Animações dos Alvos */
+@keyframes fly1 {
+    0% { top: 10%; left: -10%; }
+    100% { top: 80%; left: 110%; }
+}
+
+@keyframes fly2 {
+    0% { top: 90%; left: 110%; }
+    100% { top: 20%; left: -10%; }
+}
+
+.t1 { animation: fly1 5s infinite linear; }
+.t2 { animation: fly2 7s infinite linear; animation-delay: 1s; }
+.t3 { animation: fly1 4s infinite reverse; animation-delay: 2s; }
+.t4 { animation: fly2 6s infinite alternate; }
+.t5 { animation: fly1 3s infinite linear; animation-delay: 0.5s; }
+
+/* Mensagem de Vitória quando todos os 5 forem marcados */
+.win-message {
+    display: none;
     position: absolute;
-    bottom: 0;
-    right: -20px;
-    /* Animação do obstáculo vindo da direita */
-    animation: moveObstacle 1.5s infinite linear;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 50px;
+    color: #00ffcc;
+    text-shadow: 0 0 20px #00ffcc;
 }
 
-/* Classe de pulo adicionada via JS */
-.animate-jump {
-    animation: jump 0.5s linear;
+/* Seletor mágico: se 5 checkboxes estiverem marcados, mostre a vitória */
+input:checked + .target + input:checked + .target + input:checked + .target + input:checked + .target + input:checked + .target ~ .win-message {
+    display: block;
 }
-
-@keyframes moveObstacle {
-    0% { right: -20px; }
-    100% { right: 100%; }
-}
-
-@keyframes jump {
-    0% { bottom: 0; }
-    30% { bottom: 100px; }
-    70% { bottom: 100px; }
-    100% { bottom: 0; }
-}
-// script.js
-const player = document.getElementById("player");
-const obstacle = document.getElementById("obstacle");
-
-function jump() {
-    if (player.classList != "animate-jump") {
-        player.classList.add("animate-jump");
-        setTimeout(function() {
-            player.classList.remove("animate-jump");
-        }, 500);
-    }
-}
-
-// Detectar tecla de espaço
-document.addEventListener("keydown", function(event) {
-    if (event.code === "Space") {
-        jump();
-    }
-});
-
-// Checar colisão a cada 10ms
-let checkDead = setInterval(function() {
-    let playerTop = parseInt(window.getComputedStyle(player).getPropertyValue("top"));
-    let obstacleLeft = parseInt(window.getComputedStyle(obstacle).getPropertyValue("left"));
-
-    // Se o obstáculo estiver na posição do player e o player não estiver alto o suficiente
-    if (obstacleLeft < 100 && obstacleLeft > 50 && playerTop >= 150) {
-        obstacle.style.animation = "none";
-        obstacle.style.display = "none";
-        alert("Game Over! Recarregue a página para tentar de novo.");
-    }
-}, 10);
