@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Jogo de Zumbi Melhorado</title>
+  <title>Jogo de Zumbi com Mouse</title>
   <style>
     body {
       margin: 0;
@@ -37,7 +37,6 @@
     const ctx = canvas.getContext("2d");
     const hud = document.getElementById("hud");
 
-    // Jogador
     const player = {
       x: canvas.width / 2,
       y: canvas.height / 2,
@@ -48,34 +47,51 @@
       vida: 100
     };
 
-    // Tiros
     const bullets = [];
-
-    // Zumbis
     const zombies = [];
-    const zombieCount = 15; // mais zumbis
 
-    for (let i = 0; i < zombieCount; i++) {
+    // Função para spawnar zumbi em posição aleatória
+    function spawnZombie() {
       zombies.push({
         x: Math.random() * canvas.width,
         y: Math.random() * canvas.height,
         width: 40,
         height: 40,
-        speed: 1 + Math.random(), // velocidade variada
+        speed: 1 + Math.random(),
         color: "green"
       });
     }
 
-    // Controles do jogador
+    // Spawn inicial de zumbis
+    for (let i = 0; i < 10; i++) spawnZombie();
+
+    // Spawn contínuo a cada 5 segundos
+    setInterval(spawnZombie, 5000);
+
     const keys = {};
     document.addEventListener("keydown", (e) => keys[e.key] = true);
     document.addEventListener("keyup", (e) => keys[e.key] = false);
 
-    // Atirar com espaço
-    document.addEventListener("keydown", (e) => {
-      if (e.key === " ") {
-        bullets.push({ x: player.x + player.width/2 - 5, y: player.y, width: 10, height: 10, speed: 7 });
-      }
+    // Atirar com clique do mouse
+    canvas.addEventListener("mousedown", (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+
+      // Calcular direção
+      const dx = mouseX - (player.x + player.width/2);
+      const dy = mouseY - (player.y + player.height/2);
+      const dist = Math.sqrt(dx*dx + dy*dy);
+      const speed = 7;
+
+      bullets.push({
+        x: player.x + player.width/2 - 5,
+        y: player.y + player.height/2 - 5,
+        width: 10,
+        height: 10,
+        dx: (dx/dist) * speed,
+        dy: (dy/dist) * speed
+      });
     });
 
     function update() {
@@ -85,14 +101,18 @@
       if (keys["ArrowLeft"]) player.x -= player.speed;
       if (keys["ArrowRight"]) player.x += player.speed;
 
-      // Limitar jogador na tela
       player.x = Math.max(0, Math.min(canvas.width - player.width, player.x));
       player.y = Math.max(0, Math.min(canvas.height - player.height, player.y));
 
       // Atualizar tiros
       for (let i = bullets.length - 1; i >= 0; i--) {
-        bullets[i].y -= bullets[i].speed;
-        if (bullets[i].y < 0) bullets.splice(i, 1);
+        bullets[i].x += bullets[i].dx;
+        bullets[i].y += bullets[i].dy;
+
+        if (bullets[i].x < 0 || bullets[i].x > canvas.width ||
+            bullets[i].y < 0 || bullets[i].y > canvas.height) {
+          bullets.splice(i, 1);
+        }
       }
 
       // Atualizar zumbis
@@ -106,11 +126,11 @@
         // Colisão com jogador
         if (zombie.x < player.x + player.width && zombie.x + zombie.width > player.x &&
             zombie.y < player.y + player.height && zombie.y + zombie.height > player.y) {
-          player.vida -= 0.5; // perde vida lentamente
+          player.vida -= 0.5;
         }
       });
 
-      // Checar colisão dos tiros com zumbis
+      // Colisão tiros com zumbis
       for (let i = zombies.length - 1; i >= 0; i--) {
         for (let j = bullets.length - 1; j >= 0; j--) {
           const z = zombies[i];
@@ -124,22 +144,18 @@
         }
       }
 
-      // Atualizar HUD
       hud.textContent = `Vida: ${Math.max(0, Math.floor(player.vida))} | Tiros: ∞`;
     }
 
     function draw() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Desenhar jogador
       ctx.fillStyle = player.color;
       ctx.fillRect(player.x, player.y, player.width, player.height);
 
-      // Desenhar tiros
       ctx.fillStyle = "yellow";
       bullets.forEach(b => ctx.fillRect(b.x, b.y, b.width, b.height));
 
-      // Desenhar zumbis
       zombies.forEach(z => {
         ctx.fillStyle = z.color;
         ctx.fillRect(z.x, z.y, z.width, z.height);
