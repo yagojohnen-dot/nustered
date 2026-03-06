@@ -73,3 +73,35 @@ body {
     70% { bottom: 100px; }
     100% { bottom: 0; }
 }
+// script.js
+const player = document.getElementById("player");
+const obstacle = document.getElementById("obstacle");
+
+function jump() {
+    if (player.classList != "animate-jump") {
+        player.classList.add("animate-jump");
+        setTimeout(function() {
+            player.classList.remove("animate-jump");
+        }, 500);
+    }
+}
+
+// Detectar tecla de espaço
+document.addEventListener("keydown", function(event) {
+    if (event.code === "Space") {
+        jump();
+    }
+});
+
+// Checar colisão a cada 10ms
+let checkDead = setInterval(function() {
+    let playerTop = parseInt(window.getComputedStyle(player).getPropertyValue("top"));
+    let obstacleLeft = parseInt(window.getComputedStyle(obstacle).getPropertyValue("left"));
+
+    // Se o obstáculo estiver na posição do player e o player não estiver alto o suficiente
+    if (obstacleLeft < 100 && obstacleLeft > 50 && playerTop >= 150) {
+        obstacle.style.animation = "none";
+        obstacle.style.display = "none";
+        alert("Game Over! Recarregue a página para tentar de novo.");
+    }
+}, 10);
