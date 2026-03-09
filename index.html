@@ -2,218 +2,67 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Master Quiz Futebol - Modo Sobrevivência</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Jogo HTML Pronto</title>
+    <style>
+        body { margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #f7f7f7; overflow: hidden; }
+        #game { width: 600px; height: 200px; border-bottom: 2px solid #535353; position: relative; background-color: white; overflow: hidden; }
+        #dino { width: 50px; height: 50px; background-color: #535353; position: absolute; bottom: 0; left: 50px; }
+        #obstacle { width: 30px; height: 50px; background-color: #dc2e2e; position: absolute; bottom: 0; left: 600px; animation: moveObstacle 1.5s infinite linear; }
+        
+        @keyframes moveObstacle {
+            0% { left: 600px; }
+            100% { left: -40px; }
+        }
+        
+        .jump { animation: jump 0.5s linear; }
+        @keyframes jump {
+            0% { bottom: 0; }
+            30% { bottom: 100px; }
+            70% { bottom: 100px; }
+            100% { bottom: 0; }
+        }
+        #score { position: absolute; top: 10px; right: 20px; font-family: Arial; font-size: 20px; }
+    </style>
 </head>
 <body>
 
-    <div class="quiz-container" id="quiz">
-        <div class="quiz-header">
-            <div class="stats">
-                <span id="difficulty-label">Nível: Fácil</span>
-                <span id="lives-display">❤️❤️❤️</span>
-            </div>
-            <div class="timer-bar">
-                <div id="timer-fill"></div>
-            </div>
-            <p id="question-number">Pergunta 1 de 20</p>
-            <h3 id="question-text">A carregar pergunta...</h3>
-        </div>
-
-        <div class="options">
-            <button class="option-btn" onclick="checkAnswer(0)">Opção 1</button>
-            <button class="option-btn" onclick="checkAnswer(1)">Opção 2</button>
-            <button class="option-btn" onclick="checkAnswer(2)">Opção 3</button>
-            <button class="option-btn" onclick="checkAnswer(3)">Opção 4</button>
-        </div>
+    <div id="game">
+        <div id="dino"></div>
+        <div id="obstacle"></div>
+        <div id="score">Pontos: 0</div>
     </div>
 
-    <div id="result-container" class="result-container hide">
-        <h2 id="result-title">Fim de Jogo!</h2>
-        <p id="score-text">Pontuação: 0 de 20.</p>
-        <p id="feedback-text"></p>
-        <button class="retry-btn" onclick="location.reload()">Tentar Novamente</button>
-    </div>
+    <script>
+        const dino = document.getElementById("dino");
+        const obstacle = document.getElementById("obstacle");
+        const scoreElement = document.getElementById("score");
+        let score = 0;
 
-    <script src="script.js"></script>
+        function jump(e) {
+            if (e.code === 'Space' || e.type === 'touchstart') {
+                if (!dino.classList.contains("jump")) {
+                    dino.classList.add("jump");
+                    setTimeout(() => dino.classList.remove("jump"), 500);
+                }
+            }
+        }
+        document.addEventListener('keydown', jump);
+        document.addEventListener('touchstart', jump);
+
+        let checkDead = setInterval(() => {
+            let dinoTop = parseInt(window.getComputedStyle(dino).getPropertyValue("top"));
+            let obstacleLeft = parseInt(window.getComputedStyle(obstacle).getPropertyValue("left"));
+            
+            score++;
+            scoreElement.innerText = "Pontos: " + Math.floor(score/10);
+
+            if (obstacleLeft < 50 && obstacleLeft > 0 && dinoTop >= 150) {
+                obstacle.style.animation = "none";
+                alert("Game Over! Pontuação: " + Math.floor(score/10));
+                score = 0;
+                obstacle.style.animation = "moveObstacle 1.5s infinite linear";
+            }
+        }, 10);
+    </script>
 </body>
 </html>
-body {
-    background-color: #0d2617;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    margin: 0;
-}
-
-.quiz-container, .result-container {
-    background-color: white;
-    padding: 25px;
-    border-radius: 12px;
-    box-shadow: 0 15px 35px rgba(0,0,0,0.4);
-    width: 350px;
-    text-align: center;
-}
-
-.hide { display: none; }
-
-.stats {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 10px;
-    font-weight: bold;
-}
-
-#lives-display { color: #e74c3c; font-size: 1.2rem; }
-
-/* Barra de Tempo */
-.timer-bar {
-    width: 100%;
-    height: 8px;
-    background-color: #eee;
-    border-radius: 4px;
-    margin-bottom: 15px;
-    overflow: hidden;
-}
-
-#timer-fill {
-    height: 100%;
-    width: 100%;
-    background-color: #2ecc71;
-    transition: width 0.1s linear;
-}
-
-.option-btn {
-    display: block;
-    width: 100%;
-    padding: 12px;
-    margin: 8px 0;
-    border: 2px solid #27ae60;
-    background: #fff;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 0.95rem;
-    transition: 0.2s;
-}
-
-.option-btn:hover { background-color: #f0fff4; }
-
-.retry-btn {
-    background-color: #27ae60;
-    color: white;
-    border: none;
-    padding: 12px 20px;
-    border-radius: 4px;
-    cursor: pointer;
-    margin-top: 15px;
-}
-const questions = [
-    // MESMAS PERGUNTAS DO CÓDIGO ANTERIOR (Simplificado aqui para o exemplo)
-    { q: "Quantos jogadores cada time tem em campo?", options: ["10", "11", "12", "9"], correct: 1, level: "Fácil" },
-    { q: "Qual país venceu a Copa de 2002?", options: ["Alemanha", "França", "Brasil", "Argentina"], correct: 2, level: "Fácil" },
-    { q: "Qual a duração de um tempo normal?", options: ["45 min", "90 min", "60 min", "30 min"], correct: 0, level: "Fácil" },
-    { q: "Quem é o Rei do Futebol?", options: ["Zico", "Maradona", "Pelé", "Messi"], correct: 2, level: "Fácil" },
-    { q: "Onde se joga a bola com a mão?", options: ["Lateral", "Escanteio", "Pênalti", "Tiro de meta"], correct: 0, level: "Fácil" },
-    // ... (Continue com as outras 15 perguntas do exemplo anterior aqui)
-];
-
-// Nota: Adicione todas as 20 perguntas no array acima para o jogo completo.
-
-let currentQuestionIndex = 0;
-let score = 0;
-let lives = 3;
-let timer;
-let timeLeft = 10;
-
-function startTimer() {
-    timeLeft = 10;
-    document.getElementById('timer-fill').style.width = "100%";
-    document.getElementById('timer-fill').style.backgroundColor = "#2ecc71";
-    
-    clearInterval(timer);
-    timer = setInterval(() => {
-        timeLeft -= 0.1;
-        let percentage = (timeLeft / 10) * 100;
-        document.getElementById('timer-fill').style.width = percentage + "%";
-
-        if (timeLeft <= 3) {
-            document.getElementById('timer-fill').style.backgroundColor = "#e74c3c";
-        }
-
-        if (timeLeft <= 0) {
-            clearInterval(timer);
-            loseLife("Tempo esgotado!");
-        }
-    }, 100);
-}
-
-function loadQuestion() {
-    if (currentQuestionIndex >= questions.length) {
-        showResults(true);
-        return;
-    }
-
-    const q = questions[currentQuestionIndex];
-    document.getElementById('difficulty-label').innerText = `Nível: ${q.level}`;
-    document.getElementById('question-number').innerText = `Pergunta ${currentQuestionIndex + 1} de 20`;
-    document.getElementById('question-text').innerText = q.q;
-    
-    const buttons = document.querySelectorAll('.option-btn');
-    buttons.forEach((btn, index) => {
-        btn.innerText = q.options[index];
-    });
-
-    startTimer();
-}
-
-function checkAnswer(selected) {
-    clearInterval(timer);
-    if (selected === questions[currentQuestionIndex].correct) {
-        score++;
-        nextQuestion();
-    } else {
-        loseLife("Resposta errada!");
-    }
-}
-
-function loseLife(reason) {
-    lives--;
-    updateLivesDisplay();
-    alert(reason);
-
-    if (lives <= 0) {
-        showResults(false);
-    } else {
-        nextQuestion();
-    }
-}
-
-function nextQuestion() {
-    currentQuestionIndex++;
-    loadQuestion();
-}
-
-function updateLivesDisplay() {
-    const icons = "❤️".repeat(lives) + "🖤".repeat(3 - lives);
-    document.getElementById('lives-display').innerText = icons;
-}
-
-function showResults(win) {
-    clearInterval(timer);
-    document.getElementById('quiz').classList.add('hide');
-    document.getElementById('result-container').classList.remove('hide');
-    
-    document.getElementById('result-title').innerText = win ? "Incrível!" : "Game Over!";
-    document.getElementById('score-text').innerText = `Acertaste ${score} perguntas.`;
-    
-    if (lives === 0) {
-        document.getElementById('feedback-text').innerText = "Ficaste sem vidas! Estuda mais um pouco.";
-    } else {
-        document.getElementById('feedback-text').innerText = "Terminaste o desafio com sucesso!";
-    }
-}
-
-loadQuestion();
