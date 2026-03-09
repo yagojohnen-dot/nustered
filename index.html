@@ -1,68 +1,180 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <title>Jogo HTML Pronto</title>
-    <style>
-        body { margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #f7f7f7; overflow: hidden; }
-        #game { width: 600px; height: 200px; border-bottom: 2px solid #535353; position: relative; background-color: white; overflow: hidden; }
-        #dino { width: 50px; height: 50px; background-color: #535353; position: absolute; bottom: 0; left: 50px; }
-        #obstacle { width: 30px; height: 50px; background-color: #dc2e2e; position: absolute; bottom: 0; left: 600px; animation: moveObstacle 1.5s infinite linear; }
-        
-        @keyframes moveObstacle {
-            0% { left: 600px; }
-            100% { left: -40px; }
-        }
-        
-        .jump { animation: jump 0.5s linear; }
-        @keyframes jump {
-            0% { bottom: 0; }
-            30% { bottom: 100px; }
-            70% { bottom: 100px; }
-            100% { bottom: 0; }
-        }
-        #score { position: absolute; top: 10px; right: 20px; font-family: Arial; font-size: 20px; }
-    </style>
-</head>
-<body>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML>
+ <HEAD>
+  <TITLE> Jogo da Velha </TITLE>
+  <META NAME="Generator" CONTENT="EditPlus">
+  <META NAME="Author" CONTENT="">
+  <META NAME="Keywords" CONTENT="">
+  <META NAME="Description" CONTENT="">
 
-    <div id="game">
-        <div id="dino"></div>
-        <div id="obstacle"></div>
-        <div id="score">Pontos: 0</div>
-    </div>
+  <style>
 
-    <script>
-        const dino = document.getElementById("dino");
-        const obstacle = document.getElementById("obstacle");
-        const scoreElement = document.getElementById("score");
-        let score = 0;
+    table {width:550px; height:350px; border:1px solid black}
+	table tr { background-color:red; font:bold 46px Verdana; color:white}
+	table tr td {text-align:center; width:33.33%}
+	table tr td:hover {cursor:pointer}
+	input[type=button] {width:150px; height:50px; font-size:20px; font-weight:bold; margin-bottom:20px}
+	fieldset {font-size:20; font-weight:bold; border:2px solid blue; width: 300px; margin-bottom:25px}
 
-        function jump(e) {
-            if (e.code === 'Space' || e.type === 'touchstart') {
-                if (!dino.classList.contains("jump")) {
-                    dino.classList.add("jump");
-                    setTimeout(() => dino.classList.remove("jump"), 500);
-                }
-            }
-        }
-        document.addEventListener('keydown', jump);
-        document.addEventListener('touchstart', jump);
+  </style>
 
-        let checkDead = setInterval(() => {
-            let dinoTop = parseInt(window.getComputedStyle(dino).getPropertyValue("top"));
-            let obstacleLeft = parseInt(window.getComputedStyle(obstacle).getPropertyValue("left"));
-            
-            score++;
-            scoreElement.innerText = "Pontos: " + Math.floor(score/10);
+  <script>
 
-            if (obstacleLeft < 50 && obstacleLeft > 0 && dinoTop >= 150) {
-                obstacle.style.animation = "none";
-                alert("Game Over! Pontuação: " + Math.floor(score/10));
-                score = 0;
-                obstacle.style.animation = "moveObstacle 1.5s infinite linear";
-            }
-        }, 10);
-    </script>
-</body>
-</html>
+		//DEIXA A DIV GAME ESCONDIDA
+		window.onload =	function() { document.getElementById('game').style.visibility = 'hidden' };
+		
+		function Jogador(nome, forma) {
+			this.nome = nome;
+			this.forma = forma;
+		}
+		
+		var jogador1, jogador2;
+		//Jogador da rodada
+		var jogadorAtual;
+		var formas = ['X', 'O'];
+		var index = null;
+
+		/*
+			0 1 2
+			3 4 5
+			6 7 8
+		*/
+		var tabuleiro = new Array(9);
+
+
+		initGame = function() {
+			var nomeJogador1 = document.getElementById('jogador1').value;
+			var nomeJogador2 = document.getElementById('jogador2').value;
+			jogador1 = new Jogador(nomeJogador1, 0); //X
+			jogador2 = new Jogador(nomeJogador2, 1); //O
+
+			jogadorAtual = jogador1;
+			setLabelJogadorAtual();
+
+			//APOS DEFINIÇÃO DE JOGADORES, EXIBE A DIV E INICIA JOGO
+			document.getElementById('game').style.visibility = 'visible';
+			
+		}
+
+		/*Reinicia a partida*/
+		reset = function() { window.location.reload(); }
+		
+		/*Seta o nome do jogador da rodada na página HTML*/
+		setLabelJogadorAtual = function() {
+			document.getElementById('jogadorAtual').innerHTML = 'Jogador atual:  ' + jogadorAtual.nome;
+		}
+
+		/*Verifica se o tabuleiro está completamente preenchido, se estiver, significa que ninguém venceu a rodada*/
+		tabuleiroIsFilled = function() {
+			var preenchidos = 0;
+				for(var i = 0; i < tabuleiro.length; i++)
+					if(tabuleiro[i]	!= undefined) 
+						preenchidos++;
+				return preenchidos == tabuleiro.length;
+		}
+
+		/*Verifica a existência de ocorrências de um mesmo elemento(X ou O) nas linhas do tabuleiro, procurando um vencedor*/
+		allElementsInSomeLine = function() {
+			for( var i = 0; i < 7; i += 3) {
+				if ( tabuleiro[i] == 'X' && tabuleiro[i + 1] == 'X' && tabuleiro[i + 2] == 'X' ) { 
+					alert (jogador1.nome + ' wins!!!');
+					reset();
+				}
+				if ( tabuleiro[i] == 'O' && tabuleiro[i + 1] == 'O' && tabuleiro[i + 2] == 'O' ) {
+					alert (jogador2.nome + ' wins!!!');
+					reset();
+				}
+			}
+		}
+
+		/*Verifica a existência de ocorrências de um mesmo elemento(X ou O) nas colunas do tabuleiro, procurando um vencedor*/
+		allElementsInSomeColumn = function() {
+			for( var i = 0; i < 3; i++) {
+				if ( tabuleiro[i] == 'X' && tabuleiro[i + 3] == 'X' && tabuleiro[i + 6] == 'X' ) { 
+					alert (jogador1.nome + ' wins!!!');
+					reset();
+				}
+				if ( tabuleiro[i] == 'O' && tabuleiro[i + 3] == 'O' && tabuleiro[i + 6] == 'O' ) {
+					alert (jogador2.nome + ' wins!!!');
+					reset();
+				}
+			}
+
+		}
+
+		/*Verifica a existência de ocorrências de um mesmo elemento(X ou O) nas diagonais do tabuleiro, procurando um vencedor*/
+		allElementsInSomeDiagonal = function() {
+			if ( (tabuleiro[0] == 'X' && tabuleiro[4] == 'X' && tabuleiro[8] == 'X') ||
+	 			 (tabuleiro[2] == 'X' && tabuleiro[4] == 'X' && tabuleiro[6] == 'X')) {
+					alert (jogador1.nome + ' wins!!!');
+				reset();
+			} else if ( (tabuleiro[0] == 'O' && tabuleiro[4] == 'O' && tabuleiro[8] == 'O') ||
+					    (tabuleiro[2] == 'O' && tabuleiro[4] == 'O' && tabuleiro[6] == 'O') ) {
+					alert (jogador2.nome + ' wins!!!');
+				reset();
+			} 
+		}
+
+		/*Preenche a célula da tabela HTML escolhida pelo usuário ao clicar, além de cuidar do jogador atual da rodada e chamar as funções
+		  de verificação de algum ganhador */
+		setOnCeil = function(cel, pos) { 
+				if(tabuleiro[pos] == undefined) {
+					cel.innerHTML = formas[jogadorAtual.forma];
+					tabuleiro[pos] = formas[jogadorAtual.forma];
+
+					//define o jogador da rodada
+					(jogadorAtual.forma == 0) ? jogadorAtual = jogador2 : jogadorAtual = jogador1;
+					setLabelJogadorAtual();
+
+				} else alert('Ops. Already marked value for this =/');
+
+				allElementsInSomeLine();
+				allElementsInSomeColumn();
+				allElementsInSomeDiagonal();
+	
+				if ( tabuleiroIsFilled() ) {
+					alert ('Nobody wins! :(. Try Again');
+					reset();
+				}
+				
+			
+		}
+
+  </script>
+ </HEAD>
+
+ <BODY>
+	<fieldset>
+		<legend> Jogadores </legend>
+		<label for="Jogador 1"> Jogador 1: </label>
+		<input type="text" id="jogador1"/>
+		<label for="Jogador 1"> Jogador 2: </label>
+		<input type="text" id="jogador2"/>
+
+		<input type="button" value="Iniciar" style="margin-top:4px; height:25px; width:150px; font-size:14px" onclick="javascript: initGame();"/>
+	</fieldset>
+
+	<h3 id="jogadorAtual"> </h3>
+
+<div id="game">
+	<table cellpadding="0" cellspacing="0">
+		<tr border="1"> 
+			<td onclick="javascript: setOnCeil(this, 0);" onmouseover="javascript: this.style.backgroundColor = 'blue'" onmouseout="javascript: this.style.backgroundColor = 'red'"> &nbsp; </td>
+			<td onclick="javascript: setOnCeil(this, 1);" onmouseover="javascript: this.style.backgroundColor = 'blue'" onmouseout="javascript: this.style.backgroundColor = 'red'"> &nbsp; </td>
+			<td onclick="javascript: setOnCeil(this, 2);" onmouseover="javascript: this.style.backgroundColor = 'blue'" onmouseout="javascript: this.style.backgroundColor = 'red'"> &nbsp; </td>
+		</tr>
+		<tr> 
+			<td onclick="javascript: setOnCeil(this, 3);" onmouseover="javascript: this.style.backgroundColor = 'blue'" onmouseout="javascript: this.style.backgroundColor = 'red'"> &nbsp; </td>
+			<td onclick="javascript: setOnCeil(this, 4);" onmouseover="javascript: this.style.backgroundColor = 'blue'" onmouseout="javascript: this.style.backgroundColor = 'red'"> &nbsp; </td>
+			<td onclick="javascript: setOnCeil(this, 5);" onmouseover="javascript: this.style.backgroundColor = 'blue'" onmouseout="javascript: this.style.backgroundColor = 'red'"> &nbsp; </td>
+		</tr>
+		<tr> 
+			<td onclick="javascript: setOnCeil(this, 6);" onmouseover="javascript: this.style.backgroundColor = 'blue'" onmouseout="javascript: this.style.backgroundColor = 'red'"> &nbsp; </td>
+			<td onclick="javascript: setOnCeil(this, 7);" onmouseover="javascript: this.style.backgroundColor = 'blue'" onmouseout="javascript: this.style.backgroundColor = 'red'"> &nbsp; </td>
+			<td onclick="javascript: setOnCeil(this, 8);" onmouseover="javascript: this.style.backgroundColor = 'blue'" onmouseout="javascript: this.style.backgroundColor = 'red'"> &nbsp; </td>
+		</tr>
+	</table>
+</div>
+  
+ </BODY>
+</HTML>
