@@ -3,176 +3,217 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jogo da Velha Moderno</title>
+    <title>Master Quiz Futebol - Modo Sobrevivência</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <div class="container">
-        <h1>Jogo da Velha</h1>
-        
-        <div class="status" id="status">Vez do Jogador X</div>
-        
-        <div class="board" id="board">
-            <div class="cell" data-index="0"></div>
-            <div class="cell" data-index="1"></div>
-            <div class="cell" data-index="2"></div>
-            <div class="cell" data-index="3"></div>
-            <div class="cell" data-index="4"></div>
-            <div class="cell" data-index="5"></div>
-            <div class="cell" data-index="6"></div>
-            <div class="cell" data-index="7"></div>
-            <div class="cell" data-index="8"></div>
+    <div class="quiz-container" id="quiz">
+        <div class="quiz-header">
+            <div class="stats">
+                <span id="difficulty-label">Nível: Fácil</span>
+                <span id="lives-display">❤️❤️❤️</span>
+            </div>
+            <div class="timer-bar">
+                <div id="timer-fill"></div>
+            </div>
+            <p id="question-number">Pergunta 1 de 20</p>
+            <h3 id="question-text">A carregar pergunta...</h3>
         </div>
 
-        <button id="resetBtn">Reiniciar Jogo</button>
+        <div class="options">
+            <button class="option-btn" onclick="checkAnswer(0)">Opção 1</button>
+            <button class="option-btn" onclick="checkAnswer(1)">Opção 2</button>
+            <button class="option-btn" onclick="checkAnswer(2)">Opção 3</button>
+            <button class="option-btn" onclick="checkAnswer(3)">Opção 4</button>
+        </div>
+    </div>
+
+    <div id="result-container" class="result-container hide">
+        <h2 id="result-title">Fim de Jogo!</h2>
+        <p id="score-text">Pontuação: 0 de 20.</p>
+        <p id="feedback-text"></p>
+        <button class="retry-btn" onclick="location.reload()">Tentar Novamente</button>
     </div>
 
     <script src="script.js"></script>
 </body>
 </html>
-/* style.css */
 body {
+    background-color: #0d2617;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     display: flex;
     justify-content: center;
     align-items: center;
     height: 100vh;
     margin: 0;
-    background-color: #f0f2f5;
 }
 
-.container {
+.quiz-container, .result-container {
+    background-color: white;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+    width: 350px;
     text-align: center;
 }
 
-h1 {
-    color: #333;
-    margin-bottom: 20px;
-}
+.hide { display: none; }
 
-.status {
-    font-size: 1.2rem;
+.stats {
+    display: flex;
+    justify-content: space-between;
     margin-bottom: 10px;
     font-weight: bold;
-    color: #555;
 }
 
-.board {
-    display: grid;
-    grid-template-columns: repeat(3, 100px);
-    grid-template-rows: repeat(3, 100px);
-    gap: 10px;
-    background-color: #333;
-    padding: 10px;
-    border-radius: 8px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+#lives-display { color: #e74c3c; font-size: 1.2rem; }
+
+/* Barra de Tempo */
+.timer-bar {
+    width: 100%;
+    height: 8px;
+    background-color: #eee;
+    border-radius: 4px;
+    margin-bottom: 15px;
+    overflow: hidden;
 }
 
-.cell {
-    width: 100px;
-    height: 100px;
-    background-color: #fff;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 2.5rem;
-    font-weight: bold;
-    cursor: pointer;
-    transition: background-color 0.3s;
-}
-
-.cell:hover {
-    background-color: #e9ecef;
-}
-
-.cell.x { color: #e74c3c; } /* Cor para o X */
-.cell.o { color: #3498db; } /* Cor para o O */
-
-button {
-    margin-top: 30px;
-    padding: 10px 25px;
-    font-size: 1rem;
+#timer-fill {
+    height: 100%;
+    width: 100%;
     background-color: #2ecc71;
+    transition: width 0.1s linear;
+}
+
+.option-btn {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    margin: 8px 0;
+    border: 2px solid #27ae60;
+    background: #fff;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    transition: 0.2s;
+}
+
+.option-btn:hover { background-color: #f0fff4; }
+
+.retry-btn {
+    background-color: #27ae60;
     color: white;
     border: none;
-    border-radius: 5px;
+    padding: 12px 20px;
+    border-radius: 4px;
     cursor: pointer;
-    transition: background 0.3s;
+    margin-top: 15px;
 }
-
-button:hover {
-    background-color: #27ae60;
-}
-// script.js
-const boardElement = document.getElementById('board');
-const cells = document.querySelectorAll('.cell');
-const statusText = document.getElementById('status');
-const resetBtn = document.getElementById('resetBtn');
-
-let currentPlayer = "X";
-let gameState = ["", "", "", "", "", "", "", "", ""];
-let gameActive = true;
-
-const winningConditions = [
-    [0, 1, 2], [3, 4, 5], [6, 7, 8], // Horizontais
-    [0, 3, 6], [1, 4, 7], [2, 5, 8], // Verticais
-    [0, 4, 8], [2, 4, 6]             // Diagonais
+const questions = [
+    // MESMAS PERGUNTAS DO CÓDIGO ANTERIOR (Simplificado aqui para o exemplo)
+    { q: "Quantos jogadores cada time tem em campo?", options: ["10", "11", "12", "9"], correct: 1, level: "Fácil" },
+    { q: "Qual país venceu a Copa de 2002?", options: ["Alemanha", "França", "Brasil", "Argentina"], correct: 2, level: "Fácil" },
+    { q: "Qual a duração de um tempo normal?", options: ["45 min", "90 min", "60 min", "30 min"], correct: 0, level: "Fácil" },
+    { q: "Quem é o Rei do Futebol?", options: ["Zico", "Maradona", "Pelé", "Messi"], correct: 2, level: "Fácil" },
+    { q: "Onde se joga a bola com a mão?", options: ["Lateral", "Escanteio", "Pênalti", "Tiro de meta"], correct: 0, level: "Fácil" },
+    // ... (Continue com as outras 15 perguntas do exemplo anterior aqui)
 ];
 
-function handleCellClick(e) {
-    const clickedCell = e.target;
-    const clickedIndex = parseInt(clickedCell.getAttribute('data-index'));
+// Nota: Adicione todas as 20 perguntas no array acima para o jogo completo.
 
-    if (gameState[clickedIndex] !== "" || !gameActive) return;
+let currentQuestionIndex = 0;
+let score = 0;
+let lives = 3;
+let timer;
+let timeLeft = 10;
 
-    updateCell(clickedCell, clickedIndex);
-    checkResult();
-}
+function startTimer() {
+    timeLeft = 10;
+    document.getElementById('timer-fill').style.width = "100%";
+    document.getElementById('timer-fill').style.backgroundColor = "#2ecc71";
+    
+    clearInterval(timer);
+    timer = setInterval(() => {
+        timeLeft -= 0.1;
+        let percentage = (timeLeft / 10) * 100;
+        document.getElementById('timer-fill').style.width = percentage + "%";
 
-function updateCell(cell, index) {
-    gameState[index] = currentPlayer;
-    cell.innerText = currentPlayer;
-    cell.classList.add(currentPlayer.toLowerCase());
-}
-
-function checkResult() {
-    let roundWon = false;
-
-    for (let i = 0; i < winningConditions.length; i++) {
-        const [a, b, c] = winningConditions[i];
-        if (gameState[a] && gameState[a] === gameState[b] && gameState[a] === gameState[c]) {
-            roundWon = true;
-            break;
+        if (timeLeft <= 3) {
+            document.getElementById('timer-fill').style.backgroundColor = "#e74c3c";
         }
-    }
 
-    if (roundWon) {
-        statusText.innerText = `Jogador ${currentPlayer} Venceu!`;
-        gameActive = false;
-        return;
-    }
-
-    if (!gameState.includes("")) {
-        statusText.innerText = "Empate!";
-        gameActive = false;
-        return;
-    }
-
-    currentPlayer = currentPlayer === "X" ? "O" : "X";
-    statusText.innerText = `Vez do Jogador ${currentPlayer}`;
+        if (timeLeft <= 0) {
+            clearInterval(timer);
+            loseLife("Tempo esgotado!");
+        }
+    }, 100);
 }
 
-function restartGame() {
-    currentPlayer = "X";
-    gameState = ["", "", "", "", "", "", "", "", ""];
-    gameActive = true;
-    statusText.innerText = "Vez do Jogador X";
-    cells.forEach(cell => {
-        cell.innerText = "";
-        cell.classList.remove('x', 'o');
+function loadQuestion() {
+    if (currentQuestionIndex >= questions.length) {
+        showResults(true);
+        return;
+    }
+
+    const q = questions[currentQuestionIndex];
+    document.getElementById('difficulty-label').innerText = `Nível: ${q.level}`;
+    document.getElementById('question-number').innerText = `Pergunta ${currentQuestionIndex + 1} de 20`;
+    document.getElementById('question-text').innerText = q.q;
+    
+    const buttons = document.querySelectorAll('.option-btn');
+    buttons.forEach((btn, index) => {
+        btn.innerText = q.options[index];
     });
+
+    startTimer();
 }
 
-cells.forEach(cell => cell.addEventListener('click', handleCellClick));
-resetBtn.addEventListener('click', restartGame);
+function checkAnswer(selected) {
+    clearInterval(timer);
+    if (selected === questions[currentQuestionIndex].correct) {
+        score++;
+        nextQuestion();
+    } else {
+        loseLife("Resposta errada!");
+    }
+}
+
+function loseLife(reason) {
+    lives--;
+    updateLivesDisplay();
+    alert(reason);
+
+    if (lives <= 0) {
+        showResults(false);
+    } else {
+        nextQuestion();
+    }
+}
+
+function nextQuestion() {
+    currentQuestionIndex++;
+    loadQuestion();
+}
+
+function updateLivesDisplay() {
+    const icons = "❤️".repeat(lives) + "🖤".repeat(3 - lives);
+    document.getElementById('lives-display').innerText = icons;
+}
+
+function showResults(win) {
+    clearInterval(timer);
+    document.getElementById('quiz').classList.add('hide');
+    document.getElementById('result-container').classList.remove('hide');
+    
+    document.getElementById('result-title').innerText = win ? "Incrível!" : "Game Over!";
+    document.getElementById('score-text').innerText = `Acertaste ${score} perguntas.`;
+    
+    if (lives === 0) {
+        document.getElementById('feedback-text').innerText = "Ficaste sem vidas! Estuda mais um pouco.";
+    } else {
+        document.getElementById('feedback-text').innerText = "Terminaste o desafio com sucesso!";
+    }
+}
+
+loadQuestion();
