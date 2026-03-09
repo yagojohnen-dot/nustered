@@ -1,179 +1,44 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
-  <title>Jogo de Zumbi com Mouse</title>
-  <style>
-    body {
-      margin: 0;
-      background-color: #111;
-      color: white;
-      font-family: Arial, sans-serif;
-      overflow: hidden;
-    }
-
-    canvas {
-      display: block;
-      background-color: #222;
-      margin: 0 auto;
-    }
-
-    #hud {
-      position: absolute;
-      top: 10px;
-      left: 50%;
-      transform: translateX(-50%);
-      font-size: 20px;
-      color: white;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <title>Snake Game JS</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div id="hud">Vida: 100 | Tiros: ∞</div>
-  <canvas id="gameCanvas" width="800" height="600"></canvas>
-
-  <script>
-    const canvas = document.getElementById("gameCanvas");
-    const ctx = canvas.getContext("2d");
-    const hud = document.getElementById("hud");
-
-    const player = {
-      x: canvas.width / 2,
-      y: canvas.height / 2,
-      width: 40,
-      height: 40,
-      speed: 5,
-      color: "blue",
-      vida: 100
-    };
-
-    const bullets = [];
-    const zombies = [];
-
-    // Função para spawnar zumbi em posição aleatória
-    function spawnZombie() {
-      zombies.push({
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height,
-        width: 40,
-        height: 40,
-        speed: 1 + Math.random(),
-        color: "green"
-      });
-    }
-
-    // Spawn inicial de zumbis
-    for (let i = 0; i < 10; i++) spawnZombie();
-
-    // Spawn contínuo a cada 5 segundos
-    setInterval(spawnZombie, 5000);
-
-    const keys = {};
-    document.addEventListener("keydown", (e) => keys[e.key] = true);
-    document.addEventListener("keyup", (e) => keys[e.key] = false);
-
-    // Atirar com clique do mouse
-    canvas.addEventListener("mousedown", (e) => {
-      const rect = canvas.getBoundingClientRect();
-      const mouseX = e.clientX - rect.left;
-      const mouseY = e.clientY - rect.top;
-
-      // Calcular direção
-      const dx = mouseX - (player.x + player.width/2);
-      const dy = mouseY - (player.y + player.height/2);
-      const dist = Math.sqrt(dx*dx + dy*dy);
-      const speed = 7;
-
-      bullets.push({
-        x: player.x + player.width/2 - 5,
-        y: player.y + player.height/2 - 5,
-        width: 10,
-        height: 10,
-        dx: (dx/dist) * speed,
-        dy: (dy/dist) * speed
-      });
-    });
-
-    function update() {
-      // Movimentação do jogador
-      if (keys["ArrowUp"]) player.y -= player.speed;
-      if (keys["ArrowDown"]) player.y += player.speed;
-      if (keys["ArrowLeft"]) player.x -= player.speed;
-      if (keys["ArrowRight"]) player.x += player.speed;
-
-      player.x = Math.max(0, Math.min(canvas.width - player.width, player.x));
-      player.y = Math.max(0, Math.min(canvas.height - player.height, player.y));
-
-      // Atualizar tiros
-      for (let i = bullets.length - 1; i >= 0; i--) {
-        bullets[i].x += bullets[i].dx;
-        bullets[i].y += bullets[i].dy;
-
-        if (bullets[i].x < 0 || bullets[i].x > canvas.width ||
-            bullets[i].y < 0 || bullets[i].y > canvas.height) {
-          bullets.splice(i, 1);
-        }
-      }
-
-      // Atualizar zumbis
-      zombies.forEach(zombie => {
-        const dx = player.x - zombie.x;
-        const dy = player.y - zombie.y;
-        const dist = Math.sqrt(dx*dx + dy*dy);
-        zombie.x += (dx/dist) * zombie.speed;
-        zombie.y += (dy/dist) * zombie.speed;
-
-        // Colisão com jogador
-        if (zombie.x < player.x + player.width && zombie.x + zombie.width > player.x &&
-            zombie.y < player.y + player.height && zombie.y + zombie.height > player.y) {
-          player.vida -= 0.5;
-        }
-      });
-
-      // Colisão tiros com zumbis
-      for (let i = zombies.length - 1; i >= 0; i--) {
-        for (let j = bullets.length - 1; j >= 0; j--) {
-          const z = zombies[i];
-          const b = bullets[j];
-          if (b.x < z.x + z.width && b.x + b.width > z.x &&
-              b.y < z.y + z.height && b.y + b.height > z.y) {
-            zombies.splice(i, 1);
-            bullets.splice(j, 1);
-            break;
-          }
-        }
-      }
-
-      hud.textContent = `Vida: ${Math.max(0, Math.floor(player.vida))} | Tiros: ∞`;
-    }
-
-    function draw() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      ctx.fillStyle = player.color;
-      ctx.fillRect(player.x, player.y, player.width, player.height);
-
-      ctx.fillStyle = "yellow";
-      bullets.forEach(b => ctx.fillRect(b.x, b.y, b.width, b.height));
-
-      zombies.forEach(z => {
-        ctx.fillStyle = z.color;
-        ctx.fillRect(z.x, z.y, z.width, z.height);
-      });
-    }
-
-    function gameLoop() {
-      update();
-      draw();
-
-      if (player.vida > 0) {
-        requestAnimationFrame(gameLoop);
-      } else {
-        hud.textContent = "Você morreu! F5 para reiniciar.";
-      }
-    }
-
-    gameLoop();
-  </script>
+    <div class="game-container">
+        <h1>Snake Game</h1>
+        <canvas id="snake" width="400" height="400"></canvas>
+        <div id="score">Pontos: 0</div>
+    </div>
+    <script src="script.js"></script>
 </body>
 </html>
+body {
+    background-color: #1a1a1a;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    color: white;
+    font-family: 'Arial', sans-serif;
+}
+
+.game-container {
+    text-align: center;
+}
+
+canvas {
+    border: 5px solid #4caf50;
+    box-shadow: 0 0 20px rgba(76, 175, 80, 0.5);
+    background-color: #000;
+}
+
+#score {
+    font-size: 24px;
+    margin-top: 10px;
+}
+const canvas = document.getElementById("snake");
+const ctx = canvas.getContext("2d");
+const box =
