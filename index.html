@@ -1,179 +1,180 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <title>Tic Tac Toe Estelar</title>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML>
+<Cabeçalho>
+  <TITLE> Jogo da Velha </TITLE>
+  <META NAME="Generator" CONTENT="EditPlus">
+  <META NAME="Autor" CONTENT="">
+  <META NAME="Keywords" CONTENT="">
+  <META NAME="Descrição" CONTENT="">
 
-    <div id="start-screen" class="screen">
-        <button id="btn-enter" class="star-button">ENTRAR NO JOGO</button>
-    </div>
+  <style>
 
-    <div id="setup-screen" class="screen hidden">
-        <div class="card">
-            <h2>Quem vai jogar?</h2>
-            <input type="text" id="p1-name" placeholder="Nome do Jogador X">
-            <input type="text" id="p2-name" placeholder="Nome do Jogador O">
-            <button id="btn-start">INICIAR PARTIDA</button>
-        </div>
-    </div>
+    tabela {largura:550px; altura:350px; borda:1px sólida preta}
+	tabela tr { background-color:red; font:bold 46px Verdana; color:white}
+	tabela tr td {text-align:center; width:33.33%}
+	tabela tr td:hover {cursor:pointer}
+	input[type=button] {width:150px; height:50px; font-size:20px; font-weight:bold; margin-bottom:20px}
+	fieldset {font-size:20; font-weight:bold; border:2px solid blue; width: 300px; margin-bottom:25px}
 
-    <div id="game-screen" class="screen hidden">
-        <h2 id="turn-display">Vez de: <span id="current-player"></span></h2>
-        <div class="board" id="board">
-            <div class="cell" data-index="0"></div>
-            <div class="cell" data-index="1"></div>
-            <div class="cell" data-index="2"></div>
-            <div class="cell" data-index="3"></div>
-            <div class="cell" data-index="4"></div>
-            <div class="cell" data-index="5"></div>
-            <div class="cell" data-index="6"></div>
-            <div class="cell" data-index="7"></div>
-            <div class="cell" data-index="8"></div>
-        </div>
-        <button id="btn-reset">Reiniciar</button>
-    </div>
+  </style>
 
-    <script src="script.js"></script>
-</body>
-</html>
-body {
-    margin: 0;
-    font-family: 'Segoe UI', sans-serif;
-    background: #0f0c29;
-    background: linear-gradient(to right, #24243e, #302b63, #0f0c29);
-    color: white;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-}
+  <script>
 
-.screen { text-align: center; }
-.hidden { display: none !important; }
+		//DEIXA A DIV GAME ESCONDIDA
+		window.onload = function() { document.getElementById('game').style.visibility = 'hidden' };
+		
+		function Jogador(nome, forma) {
+			este.nome = nome;
+			this.forma = forma;
+		}
+		
+		var jogador1, jogador2;
+		//Jogador da rodada
+		var jogadorAtual;
+		var formas = ['X', 'O'];
+		var índice = nulo;
 
-/* Botão com fundo de estrelas */
-.star-button {
-    padding: 20px 40px;
-    font-size: 1.5rem;
-    color: white;
-    border: 2px solid #fff;
-    border-radius: 50px;
-    cursor: pointer;
-    background: black url('https://www.transparenttextures.com/patterns/stardust.png');
-    box-shadow: 0 0 20px rgba(255,255,255,0.2);
-    transition: transform 0.3s;
-}
+		/*
+			0 1 2
+			3 4 5
+			6 7 8
+		*/
+		var tabuleiro = new Array(9);
 
-.star-button:hover { transform: scale(1.1); }
 
-/* Card de Setup e Tabuleiro */
-.card { background: rgba(255,255,255,0.1); padding: 30px; border-radius: 15px; }
-input { display: block; margin: 10px auto; padding: 10px; border-radius: 5px; border: none; }
+		initGame = função() {
+			var nomeJogador1 = document.getElementById('jogador1').value;
+			var nomeJogador2 = document.getElementById('jogador2').value;
+			jogador1 = novo Jogador(nomeJogador1, 0); //X
+			jogador2 = novo Jogador(nomeJogador2, 1); //O
 
-.board {
-    display: grid;
-    grid-template-columns: repeat(3, 100px);
-    gap: 10px;
-    margin: 20px auto;
-}
+			jogadorAtual = jogador1;
+			definirLabelJogadorAtual();
 
-.cell {
-    width: 100px;
-    height: 100px;
-    background: rgba(255,255,255,0.05);
-    border: 1px solid #fff;
-    font-size: 2.5rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-}
+			//APOS DEFINIÇÃO DE JOGADORES, EXIBE A DIV E INICIA JOGO
+			document.getElementById('game').style.visibility = 'visible';
+			
+		}
 
-.cell:hover { background: rgba(255,255,255,0.1); }
-const screens = {
-    start: document.getElementById('start-screen'),
-    setup: document.getElementById('setup-screen'),
-    game: document.getElementById('game-screen')
-};
+		/*Reinicia a partida*/
+		reset = function() { window.location.reload(); }
+		
+		/*Definir o nome do jogador da rodada na página HTML*/
+		setLabelJogadorAtual = function() {
+			document.getElementById('jogadorAtual').innerHTML = 'Jogador atual: ' + jogadorAtual.nome;
+		}
 
-let players = { X: "Jogador 1", O: "Jogador 2" };
-let currentPlayer = "X";
-let gameState = ["", "", "", "", "", "", "", "", ""];
-let gameActive = true;
+		/*Verifique se o tabuleiro está completamente preenchido, se estiver, significa que ninguém venceu a rodada*/
+		tabuleiroIsFilled = função() {
+			var preenchidos = 0;
+				for(var i = 0; i < tabuleiro.length; i++)
+					if(tabuleiro[i] != undefined)
+						preenchidos++;
+				return preenchidos == tabuleiro.length;
+		}
 
-// Transições de Tela
-document.getElementById('btn-enter').addEventListener('click', () => {
-    screens.start.classList.add('hidden');
-    screens.setup.classList.remove('hidden');
-});
+		/*Verifica a existência de ocorrências de um mesmo elemento(X ou O) nas linhas do tabuleiro, procurando um vencedor*/
+		todosOsElementosEmAlgumaLinha = função() {
+			for( var i = 0; i < 7; i += 3) {
+				if ( tabuleiro[i] == 'X' && tabuleiro[i + 1] == 'X' && tabuleiro[i + 2] == 'X' ) {
+					alerta (jogador1.nome + 'ganha!!!');
+					reiniciar();
+				}
+				if ( tabuleiro[i] == 'O' && tabuleiro[i + 1] == 'O' && tabuleiro[i + 2] == 'O' ) {
+					alerta (jogador2.nome + 'ganha!!!');
+					reiniciar();
+				}
+			}
+		}
 
-document.getElementById('btn-start').addEventListener('click', () => {
-    const p1 = document.getElementById('p1-name').value;
-    const p2 = document.getElementById('p2-name').value;
-    if(p1) players.X = p1;
-    if(p2) players.O = p2;
-    
-    screens.setup.classList.add('hidden');
-    screens.game.classList.remove('hidden');
-    updateTurnDisplay();
-});
+		/*Verifica a existência de ocorrências de um mesmo elemento(X ou O) nas colunas do tabuleiro, procurando um vencedor*/
+		todosOsElementosEmAlgumaColuna = função() {
+			para (var i = 0; i < 3; i++) {
+				if ( tabuleiro[i] == 'X' && tabuleiro[i + 3] == 'X' && tabuleiro[i + 6] == 'X' ) {
+					alerta (jogador1.nome + 'ganha!!!');
+					reiniciar();
+				}
+				if ( tabuleiro[i] == 'O' && tabuleiro[i + 3] == 'O' && tabuleiro[i + 6] == 'O' ) {
+					alerta (jogador2.nome + 'ganha!!!');
+					reiniciar();
+				}
+			}
 
-// Lógica do Jogo
-const winningConditions = [
-    [0,1,2], [3,4,5], [6,7,8], [0,3,6], [1,4,7], [2,5,8], [0,4,8], [2,4,6]
-];
+		}
 
-function handleCellClick(e) {
-    const cell = e.target;
-    const index = cell.getAttribute('data-index');
+		/*Verifica a existência de ocorrências de um mesmo elemento(X ou O) nas diagonais do tabuleiro, procurando um vencedor*/
+		todosOsElementosNaDiagonal = função() {
+			if ( (tabuleiro[0] == 'X' && tabuleiro[4] == 'X' && tabuleiro[8] == 'X') ||
+	 			 (tabuleiro[2] == 'X' && tabuleiro[4] == 'X' && tabuleiro[6] == 'X')) {
+					alerta (jogador1.nome + 'ganha!!!');
+				reiniciar();
+			} else if ( (tabuleiro[0] == 'O' && tabuleiro[4] == 'O' && tabuleiro[8] == 'O') ||
+					    (tabuleiro[2] == 'O' && tabuleiro[4] == 'O' && tabuleiro[6] == 'O') ) {
+					alerta (jogador2.nome + 'ganha!!!');
+				reiniciar();
+			}
+		}
 
-    if (gameState[index] !== "" || !gameActive) return;
+		/*Preenche a célula da tabela HTML escolhido pelo usuário ao clicar, além de cuidar do jogador atual da rodada e chamar as funções
+		  de verificação de algum ganhador */
+		setOnCeil = função(cel, pos) {
+				if(tabuleiro[pos] == indefinido) {
+					cel.innerHTML = formas[jogadorAtual.forma];
+					tabuleiro[pos] = formas[jogadorAtual.forma];
 
-    gameState[index] = currentPlayer;
-    cell.innerText = currentPlayer;
-    
-    checkResult();
-}
+					//define o jogador da rodada
+					(jogadorAtual.forma == 0) ? jogadorAtual = jogador2 : jogadorAtual = jogador1;
+					definirLabelJogadorAtual();
 
-function checkResult() {
-    let roundWon = false;
-    for (let condition of winningConditions) {
-        let [a, b, c] = condition;
-        if (gameState[a] && gameState[a] === gameState[b] && gameState[a] === gameState[c]) {
-            roundWon = true;
-            break;
-        }
-    }
+				} else alert('Ops. Já marquei o valor para isso =/');
 
-    if (roundWon) {
-        alert(`Parabéns ${players[currentPlayer]}! Você venceu!`);
-        gameActive = false;
-        return;
-    }
+				todosOsElementosEmAlgumaLinha();
+				todosOsElementosEmAlgumaColuna();
+				todosOsElementosEmAlgumaDiagonal();
+	
+				se ( tabuleiroIsFilled() ) {
+					alerta ('Ninguém ganha! :(. Tente novamente');
+					reiniciar();
+				}
+				
+			
+		}
 
-    if (!gameState.includes("")) {
-        alert("Empate!");
-        gameActive = false;
-        return;
-    }
+  </script>
+</HEAD>
 
-    currentPlayer = currentPlayer === "X" ? "O" : "X";
-    updateTurnDisplay();
-}
+<CORPO>
+	<fieldset>
+		<legenda> Jogadores </legenda>
+		<label for="Jogador 1"> Jogador 1: </label>
+		<input type="text" id="jogador1"/>
+		<label for="Jogador 1"> Jogador 2: </label>
+		<input type="text" id="jogador2"/>
 
-function updateTurnDisplay() {
-    document.getElementById('current-player').innerText = players[currentPlayer];
-}
+		<input type="button" value="Iniciar" style="margin-top:4px; height:25px; width:150px; font-size:14px" onclick="javascript: initGame();"/>
+	</fieldset>
 
-document.querySelectorAll('.cell').forEach(cell => cell.addEventListener('click', handleCellClick));
+	<h3 id="jogadorAtual"> </h3>
 
-document.getElementById('btn-reset').addEventListener('click', () => {
-    gameState = ["", "", "", "", "", "", "", "", ""];
-    gameActive = true;
-    currentPlayer = "X";
-    document.querySelectorAll('.cell').forEach(cell => cell.innerText = "");
-    updateTurnDisplay();
-});
+<div id="game">
+	<table cellpadding="0" cellspacing="0">
+		<tr border="">
+			<td onclick="javascript: setOnCeil(this, 0);" onmouseover="javascript: this.style.backgroundColor = 'blue'" onmouseout="javascript: this.style.backgroundColor = 'red'">   </td>
+			<td onclick="javascript: setOnCeil(this, 1);" onmouseover="javascript: this.style.backgroundColor = 'blue'" onmouseout="javascript: this.style.backgroundColor = 'red'">   </td>
+			<td onclick="javascript: setOnCeil(this, 2);" onmouseover="javascript: this.style.backgroundColor = 'blue'" onmouseout="javascript: this.style.backgroundColor = 'red'">   </td>
+		</tr>
+		<tr>
+			<td onclick="javascript: setOnCeil(this, 3);" onmouseover="javascript: this.style.backgroundColor = 'blue'" onmouseout="javascript: this.style.backgroundColor = 'red'">   </td>
+			<td onclick="javascript: setOnCeil(this, 4);" onmouseover="javascript: this.style.backgroundColor = 'blue'" onmouseout="javascript: this.style.backgroundColor = 'red'">   </td>
+			<td onclick="javascript: setOnCeil(this, 5);" onmouseover="javascript: this.style.backgroundColor = 'blue'" onmouseout="javascript: this.style.backgroundColor = 'red'">   </td>
+		</tr>
+		<tr>
+			<td onclick="javascript: setOnCeil(this, 6);" onmouseover="javascript: this.style.backgroundColor = 'blue'" onmouseout="javascript: this.style.backgroundColor = 'red'">   </td>
+			<td onclick="javascript: setOnCeil(this, 7);" onmouseover="javascript: this.style.backgroundColor = 'blue'" onmouseout="javascript: this.style.backgroundColor = 'red'">   </td>
+			<td onclick="javascript: setOnCeil(this, 8);" onmouseover="javascript: this.style.backgroundColor = 'blue'" onmouseout="javascript: this.style.backgroundColor = 'red'">   </td>
+		</tr>
+	</table>
+</div>
+  
+</BODY>
+</HTML>
