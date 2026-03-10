@@ -2,109 +2,156 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Zombie Apocalypse - Survival</title>
+    <title>Sobrevivência Zumbi - JS</title>
     <style>
-        body {
-            margin: 0;
-            padding: 0;
-            background-color: #050505;
-            color: #eee;
-            font-family: 'Verdana', sans-serif;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        #game-container {
-            position: relative;
-            margin-top: 20px;
-            box-shadow: 0 0 50px rgba(255, 0, 0, 0.2);
-        }
-
-        canvas {
-            background-color: #111;
-            border: 5px solid #333;
-            display: block;
-            cursor: crosshair;
-        }
-
+        body { margin: 0; overflow: hidden; background: #1a1a1a; font-family: sans-serif; }
+        canvas { display: block; background: #222; cursor: crosshair; }
         #ui {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            pointer-events: none;
-            text-shadow: 2px 2px 4px #000;
+            position: absolute; top: 10px; left: 10px;
+            color: white; font-size: 20px; pointer-events: none;
         }
-
-        .info { font-size: 20px; font-weight: bold; color: #ff4d4d; }
-        
-        #menu-inicial {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            text-align: center;
-            background: rgba(0,0,0,0.8);
-            padding: 30px;
-            border: 2px solid #ff4d4d;
-        }
-
-        button {
-            padding: 10px 25px;
-            font-size: 18px;
-            font-weight: bold;
-            background: #ff4d4d;
-            color: white;
-            border: none;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-
-        button:hover { background: #cc0000; }
     </style>
 </head>
 <body>
 
-    <div id="game-container">
-        <canvas id="canvas"></canvas>
-        
-        <div id="ui">
-            <div class="info">Zumbis Eliminados: <span id="score">0</span></div>
-            <div class="info">Integridade: <span id="health">100</span>%</div>
-        </div>
+    <div id="ui">Pontuação: <span id="score">0</span></div>
+    <canvas id="gameCanvas"></canvas>
 
-        <div id="menu-inicial">
-            <h1>ZOMBIE SURVIVAL</h1>
-            <p>Use WASD para mover e MOUSE para atirar.</p>
-            <button onclick="startGame()">INICIAR COMBATE</button>
-        </div>
-    </div>
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const scoreEl = document.getElementById('score');
 
-    <script>
-        const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d');
-        const scoreLabel = document.getElementById('score');
-        const healthLabel = document.getElementById('health');
-        const menu = document.getElementById('menu-inicial');
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
 
-        canvas.width = 800;
-        canvas.height = 600;
+let score = 0;
+let projectiles = [];
+let enemies = [];
 
-        let gameActive = false;
-        let score = 0;
-        let health = 100;
-        let enemies = [];
-        let bullets = [];
-        const keys = {};
+class Player {
+    constructor() {
+        this.x = canvas.width / 2;
+        this.y = canvas.height / 2;
+        this.radius = 15;
+        this.color = '#3498db';
+    }
+    draw() {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = this.color;
+        ctx.fill();
+    }
+}
 
-        const player = {
-            x: canvas.width / 2,
-            y: canvas.height / 2,
-            size: 20,
-            speed: 4,
-            color: '#00ccff'
-        };
+class Projectile {
+    constructor(x, y, velocity) {
+        this.x = x;
+        this.y = y;
+        this.velocity = velocity;
+        this.radius = 4;
+    }
+    draw() {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = '#f1c40f';
+        ctx.fill();
+    }
+    update() {
+        this.x += this.velocity.x;
+        this.y += this.velocity.y;
+    }
+}
 
-        // Controles
-        window.on
+class Enemy {
+    constructor(x, y, velocity) {
+        this.x = x;
+        this.y = y;
+        this.velocity = velocity;
+        this.radius = 15;
+    }
+    draw() {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = '#2ecc71';
+        ctx.fill();
+    }
+    update() {
+        this.x += this.velocity.x;
+        this.y += this.velocity.y;
+    }
+}
+
+const player = new Player();
+
+function spawnEnemies() {
+    setInterval(() => {
+        const radius = 15;
+        let x, y;
+        if (Math.random() < 0.5) {
+            x = Math.random() < 0.5 ? 0 - radius : canvas.width + radius;
+            y = Math.random() * canvas.height;
+        } else {
+            x = Math.random() * canvas.width;
+            y = Math.random() < 0.5 ? 0 - radius : canvas.height + radius;
+        }
+        const angle = Math.atan2(canvas.height / 2 - y, canvas.width / 2 - x);
+        const velocity = { x: Math.cos(angle) * 2, y: Math.sin(angle) * 2 };
+        enemies.push(new Enemy(x, y, velocity));
+    }, 1000);
+}
+
+function animate() {
+    const animationId = requestAnimationFrame(animate);
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    player.draw();
+
+    projectiles.forEach((p, index) => {
+        p.update();
+        p.draw();
+        // Remover tiros fora da tela
+        if (p.x < 0 || p.x > canvas.width || p.y < 0 || p.y > canvas.height) {
+            projectiles.splice(index, 1);
+        }
+    });
+
+    enemies.forEach((enemy, eIndex) => {
+        enemy.update();
+        enemy.draw();
+
+        // Colisão Zumbi -> Jogador (Game Over)
+        const dist = Math.hypot(player.x - enemy.x, player.y - enemy.y);
+        if (dist - enemy.radius - player.radius < 1) {
+            cancelAnimationFrame(animationId);
+            alert("Fim de Jogo! Pontuação: " + score);
+            location.reload();
+        }
+
+        // Colisão Tiro -> Zumbi
+        projectiles.forEach((p, pIndex) => {
+            const dist = Math.hypot(p.x - enemy.x, p.y - enemy.y);
+            if (dist - enemy.radius - p.radius < 1) {
+                setTimeout(() => {
+                    enemies.splice(eIndex, 1);
+                    projectiles.splice(pIndex, 1);
+                    score += 10;
+                    scoreEl.innerHTML = score;
+                }, 0);
+            }
+        });
+    });
+}
+
+window.addEventListener('click', (event) => {
+    const angle = Math.atan2(event.clientY - canvas.height / 2, event.clientX - canvas.width / 2);
+    const velocity = { x: Math.cos(angle) * 6, y: Math.sin(angle) * 6 };
+    projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, velocity));
+});
+
+spawnEnemies();
+animate();
+</script>
+</body>
+</html>
