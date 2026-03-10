@@ -1,180 +1,110 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
-<HTML>
- <HEAD>
-  <TITLE> Jogo da Velha </TITLE>
-  <META NAME="Generator" CONTENT="EditPlus">
-  <META NAME="Author" CONTENT="">
-  <META NAME="Keywords" CONTENT="">
-  <META NAME="Description" CONTENT="">
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Zombie Apocalypse - Survival</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #050505;
+            color: #eee;
+            font-family: 'Verdana', sans-serif;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
 
-  <style>
+        #game-container {
+            position: relative;
+            margin-top: 20px;
+            box-shadow: 0 0 50px rgba(255, 0, 0, 0.2);
+        }
 
-    table {width:550px; height:350px; border:1px solid black}
-	table tr { background-color:red; font:bold 46px Verdana; color:white}
-	table tr td {text-align:center; width:33.33%}
-	table tr td:hover {cursor:pointer}
-	input[type=button] {width:150px; height:50px; font-size:20px; font-weight:bold; margin-bottom:20px}
-	fieldset {font-size:20; font-weight:bold; border:2px solid blue; width: 300px; margin-bottom:25px}
+        canvas {
+            background-color: #111;
+            border: 5px solid #333;
+            display: block;
+            cursor: crosshair;
+        }
 
-  </style>
+        #ui {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            pointer-events: none;
+            text-shadow: 2px 2px 4px #000;
+        }
 
-  <script>
+        .info { font-size: 20px; font-weight: bold; color: #ff4d4d; }
+        
+        #menu-inicial {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            background: rgba(0,0,0,0.8);
+            padding: 30px;
+            border: 2px solid #ff4d4d;
+        }
 
-		//DEIXA A DIV GAME ESCONDIDA
-		window.onload =	function() { document.getElementById('game').style.visibility = 'hidden' };
-		
-		function Jogador(nome, forma) {
-			this.nome = nome;
-			this.forma = forma;
-		}
-		
-		var jogador1, jogador2;
-		//Jogador da rodada
-		var jogadorAtual;
-		var formas = ['X', 'O'];
-		var index = null;
+        button {
+            padding: 10px 25px;
+            font-size: 18px;
+            font-weight: bold;
+            background: #ff4d4d;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: 0.3s;
+        }
 
-		/*
-			0 1 2
-			3 4 5
-			6 7 8
-		*/
-		var tabuleiro = new Array(9);
+        button:hover { background: #cc0000; }
+    </style>
+</head>
+<body>
 
+    <div id="game-container">
+        <canvas id="canvas"></canvas>
+        
+        <div id="ui">
+            <div class="info">Zumbis Eliminados: <span id="score">0</span></div>
+            <div class="info">Integridade: <span id="health">100</span>%</div>
+        </div>
 
-		initGame = function() {
-			var nomeJogador1 = document.getElementById('jogador1').value;
-			var nomeJogador2 = document.getElementById('jogador2').value;
-			jogador1 = new Jogador(nomeJogador1, 0); //X
-			jogador2 = new Jogador(nomeJogador2, 1); //O
+        <div id="menu-inicial">
+            <h1>ZOMBIE SURVIVAL</h1>
+            <p>Use WASD para mover e MOUSE para atirar.</p>
+            <button onclick="startGame()">INICIAR COMBATE</button>
+        </div>
+    </div>
 
-			jogadorAtual = jogador1;
-			setLabelJogadorAtual();
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const scoreLabel = document.getElementById('score');
+        const healthLabel = document.getElementById('health');
+        const menu = document.getElementById('menu-inicial');
 
-			//APOS DEFINIÇÃO DE JOGADORES, EXIBE A DIV E INICIA JOGO
-			document.getElementById('game').style.visibility = 'visible';
-			
-		}
+        canvas.width = 800;
+        canvas.height = 600;
 
-		/*Reinicia a partida*/
-		reset = function() { window.location.reload(); }
-		
-		/*Seta o nome do jogador da rodada na página HTML*/
-		setLabelJogadorAtual = function() {
-			document.getElementById('jogadorAtual').innerHTML = 'Jogador atual:  ' + jogadorAtual.nome;
-		}
+        let gameActive = false;
+        let score = 0;
+        let health = 100;
+        let enemies = [];
+        let bullets = [];
+        const keys = {};
 
-		/*Verifica se o tabuleiro está completamente preenchido, se estiver, significa que ninguém venceu a rodada*/
-		tabuleiroIsFilled = function() {
-			var preenchidos = 0;
-				for(var i = 0; i < tabuleiro.length; i++)
-					if(tabuleiro[i]	!= undefined) 
-						preenchidos++;
-				return preenchidos == tabuleiro.length;
-		}
+        const player = {
+            x: canvas.width / 2,
+            y: canvas.height / 2,
+            size: 20,
+            speed: 4,
+            color: '#00ccff'
+        };
 
-		/*Verifica a existência de ocorrências de um mesmo elemento(X ou O) nas linhas do tabuleiro, procurando um vencedor*/
-		allElementsInSomeLine = function() {
-			for( var i = 0; i < 7; i += 3) {
-				if ( tabuleiro[i] == 'X' && tabuleiro[i + 1] == 'X' && tabuleiro[i + 2] == 'X' ) { 
-					alert (jogador1.nome + ' wins!!!');
-					reset();
-				}
-				if ( tabuleiro[i] == 'O' && tabuleiro[i + 1] == 'O' && tabuleiro[i + 2] == 'O' ) {
-					alert (jogador2.nome + ' wins!!!');
-					reset();
-				}
-			}
-		}
-
-		/*Verifica a existência de ocorrências de um mesmo elemento(X ou O) nas colunas do tabuleiro, procurando um vencedor*/
-		allElementsInSomeColumn = function() {
-			for( var i = 0; i < 3; i++) {
-				if ( tabuleiro[i] == 'X' && tabuleiro[i + 3] == 'X' && tabuleiro[i + 6] == 'X' ) { 
-					alert (jogador1.nome + ' wins!!!');
-					reset();
-				}
-				if ( tabuleiro[i] == 'O' && tabuleiro[i + 3] == 'O' && tabuleiro[i + 6] == 'O' ) {
-					alert (jogador2.nome + ' wins!!!');
-					reset();
-				}
-			}
-
-		}
-
-		/*Verifica a existência de ocorrências de um mesmo elemento(X ou O) nas diagonais do tabuleiro, procurando um vencedor*/
-		allElementsInSomeDiagonal = function() {
-			if ( (tabuleiro[0] == 'X' && tabuleiro[4] == 'X' && tabuleiro[8] == 'X') ||
-	 			 (tabuleiro[2] == 'X' && tabuleiro[4] == 'X' && tabuleiro[6] == 'X')) {
-					alert (jogador1.nome + ' wins!!!');
-				reset();
-			} else if ( (tabuleiro[0] == 'O' && tabuleiro[4] == 'O' && tabuleiro[8] == 'O') ||
-					    (tabuleiro[2] == 'O' && tabuleiro[4] == 'O' && tabuleiro[6] == 'O') ) {
-					alert (jogador2.nome + ' wins!!!');
-				reset();
-			} 
-		}
-
-		/*Preenche a célula da tabela HTML escolhida pelo usuário ao clicar, além de cuidar do jogador atual da rodada e chamar as funções
-		  de verificação de algum ganhador */
-		setOnCeil = function(cel, pos) { 
-				if(tabuleiro[pos] == undefined) {
-					cel.innerHTML = formas[jogadorAtual.forma];
-					tabuleiro[pos] = formas[jogadorAtual.forma];
-
-					//define o jogador da rodada
-					(jogadorAtual.forma == 0) ? jogadorAtual = jogador2 : jogadorAtual = jogador1;
-					setLabelJogadorAtual();
-
-				} else alert('Ops. Already marked value for this =/');
-
-				allElementsInSomeLine();
-				allElementsInSomeColumn();
-				allElementsInSomeDiagonal();
-	
-				if ( tabuleiroIsFilled() ) {
-					alert ('Nobody wins! :(. Try Again');
-					reset();
-				}
-				
-			
-		}
-
-  </script>
- </HEAD>
-
- <BODY>
-	<fieldset>
-		<legend> Jogadores </legend>
-		<label for="Jogador 1"> Jogador 1: </label>
-		<input type="text" id="jogador1"/>
-		<label for="Jogador 1"> Jogador 2: </label>
-		<input type="text" id="jogador2"/>
-
-		<input type="button" value="Iniciar" style="margin-top:4px; height:25px; width:150px; font-size:14px" onclick="javascript: initGame();"/>
-	</fieldset>
-
-	<h3 id="jogadorAtual"> </h3>
-
-<div id="game">
-	<table cellpadding="0" cellspacing="0">
-		<tr border="1"> 
-			<td onclick="javascript: setOnCeil(this, 0);" onmouseover="javascript: this.style.backgroundColor = 'blue'" onmouseout="javascript: this.style.backgroundColor = 'red'"> &nbsp; </td>
-			<td onclick="javascript: setOnCeil(this, 1);" onmouseover="javascript: this.style.backgroundColor = 'blue'" onmouseout="javascript: this.style.backgroundColor = 'red'"> &nbsp; </td>
-			<td onclick="javascript: setOnCeil(this, 2);" onmouseover="javascript: this.style.backgroundColor = 'blue'" onmouseout="javascript: this.style.backgroundColor = 'red'"> &nbsp; </td>
-		</tr>
-		<tr> 
-			<td onclick="javascript: setOnCeil(this, 3);" onmouseover="javascript: this.style.backgroundColor = 'blue'" onmouseout="javascript: this.style.backgroundColor = 'red'"> &nbsp; </td>
-			<td onclick="javascript: setOnCeil(this, 4);" onmouseover="javascript: this.style.backgroundColor = 'blue'" onmouseout="javascript: this.style.backgroundColor = 'red'"> &nbsp; </td>
-			<td onclick="javascript: setOnCeil(this, 5);" onmouseover="javascript: this.style.backgroundColor = 'blue'" onmouseout="javascript: this.style.backgroundColor = 'red'"> &nbsp; </td>
-		</tr>
-		<tr> 
-			<td onclick="javascript: setOnCeil(this, 6);" onmouseover="javascript: this.style.backgroundColor = 'blue'" onmouseout="javascript: this.style.backgroundColor = 'red'"> &nbsp; </td>
-			<td onclick="javascript: setOnCeil(this, 7);" onmouseover="javascript: this.style.backgroundColor = 'blue'" onmouseout="javascript: this.style.backgroundColor = 'red'"> &nbsp; </td>
-			<td onclick="javascript: setOnCeil(this, 8);" onmouseover="javascript: this.style.backgroundColor = 'blue'" onmouseout="javascript: this.style.backgroundColor = 'red'"> &nbsp; </td>
-		</tr>
-	</table>
-</div>
-  
- </BODY>
-</HTML>
+        // Controles
+        window.on
