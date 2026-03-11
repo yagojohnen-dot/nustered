@@ -1,31 +1,185 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>FPS</title>
+
+<style>
+body{
+margin:0;
+overflow:hidden;
+background:black;
+}
+
+#crosshair{
+position:absolute;
+top:50%;
+left:50%;
+transform:translate(-50%,-50%);
+color:white;
+font-size:30px;
+font-family:Arial;
+}
+
+#score{
+position:absolute;
+top:20px;
+left:20px;
+color:white;
+font-size:24px;
+font-family:Arial;
+}
+</style>
+</head>
+
+<body>
+
+<div id="crosshair">+</div>
+<div id="score">Score: 0</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js"></script>
+
+<script>
+
+let scene = new THREE.Scene()
+
+let camera = new THREE.PerspectiveCamera(
+75,
+window.innerWidth/window.innerHeight,
+0.1,
+1000
+)
+
+let renderer = new THREE.WebGLRenderer()
+renderer.setSize(window.innerWidth,window.innerHeight)
+document.body.appendChild(renderer.domElement)
+
+camera.position.set(0,1.6,5)
+
+
+// chão
+let floorGeo = new THREE.PlaneGeometry(200,200)
+let floorMat = new THREE.MeshBasicMaterial({color:0x333333})
+let floor = new THREE.Mesh(floorGeo,floorMat)
+
+floor.rotation.x = -Math.PI/2
+scene.add(floor)
+
+
+// alvos
+let targets=[]
+let score=0
+
+function spawnTarget(){
+
+let g=new THREE.BoxGeometry()
+let m=new THREE.MeshBasicMaterial({color:0xff0000})
+let cube=new THREE.Mesh(g,m)
+
+cube.position.x=(Math.random()-0.5)*20
+cube.position.y=1+Math.random()*3
+cube.position.z=(Math.random()-0.5)*20
+
+scene.add(cube)
+targets.push(cube)
+
+}
+
+for(let i=0;i<10;i++) spawnTarget()
+
+
+// controle mouse
+let yaw=0
+let pitch=0
+
+document.body.addEventListener("click",()=>{
+document.body.requestPointerLock()
+})
+
+document.addEventListener("mousemove",(e)=>{
+
+if(document.pointerLockElement===document.body){
+
+yaw -= e.movementX*0.002
+pitch -= e.movementY*0.002
+
+pitch=Math.max(-Math.PI/2,Math.min(Math.PI/2,pitch))
+
+camera.rotation.set(pitch,yaw,0)
+
+}
+
+})
+
+
+// tiro
+let raycaster=new THREE.Raycaster()
+
+document.addEventListener("mousedown",()=>{
+
+raycaster.setFromCamera({x:0,y:0},camera)
+
+let hits=raycaster.intersectObjects(targets)
+
+if(hits.length>0){
+
+let hit=hits[0].object
+scene.remove(hit)
+
+targets.splice(targets.indexOf(hit),1)
+
+score++
+document.getElementById("score").innerText="Score: "+score
+
+spawnTarget()
+
+}
+
+})
+
+
+// movimento
+let forward=false
+let back=false
+let left=false
+let right=false
+
+document.addEventListener("keydown",(e)=>{
+
+if(e.code==="KeyW") forward=true
+if(e.code==="KeyS") back=true
+if(e.code==="KeyA") left=true
+if(e.code==="KeyD") right=true
+
+})
+
+document.addEventListener("keyup",(e)=>{
+
+if(e.code==="KeyW") forward=false
+if(e.code==="KeyS") back=false
+if(e.code==="KeyA") left=false
+if(e.code==="KeyD") right=false
+
+})
+
+
 function animate(){
 
 requestAnimationFrame(animate)
 
-let speed = 0.1
+let speed=0.1
 
-let direction = new THREE.Vector3()
-camera.getWorldDirection(direction)
-
-let right = new THREE.Vector3()
-right.crossVectors(camera.up, direction).normalize()
-
-if(forward){
-camera.position.add(direction.clone().multiplyScalar(speed))
-}
-
-if(back){
-camera.position.add(direction.clone().multiplyScalar(-speed))
-}
-
-if(left){
-camera.position.add(right.clone().multiplyScalar(speed))
-}
-
-if(right){
-camera.position.add(right.clone().multiplyScalar(-speed))
-}
+if(forward) camera.translateZ(-speed)
+if(back) camera.translateZ(speed)
+if(left) camera.translateX(-speed)
+if(right) camera.translateX(speed)
 
 renderer.render(scene,camera)
 
 }
+
+animate()
+
+</script>
+</body>
+</html>
