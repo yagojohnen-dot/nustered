@@ -1,194 +1,31 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <title>Sobrevivência Zumbi Pro</title>
-    <style>
-        body { margin: 0; overflow: hidden; background: #1a1a1a; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        canvas { display: block; background: #222; cursor: crosshair; }
-        #ui {
-            position: absolute; top: 20px; left: 20px;
-            color: white; font-size: 24px; pointer-events: none;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-        }
-        #health-container {
-            position: absolute; bottom: 20px; left: 20px;
-            width: 200px; height: 20px; background: #444;
-            border: 2px solid #fff;
-        }
-        #health-bar {
-            width: 100%; height: 100%; background: #ff4757;
-            transition: width 0.2s;
-        }
-    </style>
-</head>
-<body>
+function animate(){
 
-    <div id="ui">Pontuação: <span id="score">0</span></div>
-    <div id="health-container"><div id="health-bar"></div></div>
-    <canvas id="gameCanvas"></canvas>
+requestAnimationFrame(animate)
 
-<script>
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
-const scoreEl = document.getElementById('score');
-const healthBar = document.getElementById('health-bar');
+let speed = 0.1
 
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
+let direction = new THREE.Vector3()
+camera.getWorldDirection(direction)
 
-let score = 0;
-let projectiles = [];
-let enemies = [];
-const keys = { w: false, a: false, s: false, d: false };
+let right = new THREE.Vector3()
+right.crossVectors(camera.up, direction).normalize()
 
-class Player {
-    constructor() {
-        this.x = canvas.width / 2;
-        this.y = canvas.height / 2;
-        this.radius = 15;
-        this.color = '#3498db';
-        this.speed = 4;
-        this.health = 100;
-        this.isInvulnerable = false;
-    }
-    draw() {
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-        ctx.fillStyle = this.isInvulnerable ? '#fff' : this.color;
-        ctx.fill();
-        ctx.closePath();
-    }
-    update() {
-        if (keys.w && this.y > this.radius) this.y -= this.speed;
-        if (keys.s && this.y < canvas.height - this.radius) this.y += this.speed;
-        if (keys.a && this.x > this.radius) this.x -= this.speed;
-        if (keys.d && this.x < canvas.width - this.radius) this.x += this.speed;
-    }
-    takeDamage(amount) {
-        if (this.isInvulnerable) return;
-        this.health -= amount;
-        healthBar.style.width = this.health + "%";
-        
-        if (this.health <= 0) {
-            alert("Fim de Jogo! Pontuação: " + score);
-            location.reload();
-        }
-
-        // Piscar e ficar invulnerável por 500ms
-        this.isInvulnerable = true;
-        setTimeout(() => this.isInvulnerable = false, 500);
-    }
+if(forward){
+camera.position.add(direction.clone().multiplyScalar(speed))
 }
 
-class Projectile {
-    constructor(x, y, velocity) {
-        this.x = x; this.y = y;
-        this.velocity = velocity;
-        this.radius = 4;
-    }
-    draw() {
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-        ctx.fillStyle = '#f1c40f';
-        ctx.fill();
-    }
-    update() {
-        this.x += this.velocity.x;
-        this.y += this.velocity.y;
-    }
+if(back){
+camera.position.add(direction.clone().multiplyScalar(-speed))
 }
 
-class Enemy {
-    constructor(x, y, speed) {
-        this.x = x; this.y = y;
-        this.speed = speed;
-        this.radius = 15;
-    }
-    draw() {
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-        ctx.fillStyle = '#2ecc71';
-        ctx.fill();
-    }
-    update(playerX, playerY) {
-        // Perseguir o jogador dinamicamente
-        const angle = Math.atan2(playerY - this.y, playerX - this.x);
-        this.x += Math.cos(angle) * this.speed;
-        this.y += Math.sin(angle) * this.speed;
-    }
+if(left){
+camera.position.add(right.clone().multiplyScalar(speed))
 }
 
-const player = new Player();
-
-// Listeners de teclado
-window.addEventListener('keydown', (e) => { if(keys.hasOwnProperty(e.key.toLowerCase())) keys[e.key.toLowerCase()] = true; });
-window.addEventListener('keyup', (e) => { if(keys.hasOwnProperty(e.key.toLowerCase())) keys[e.key.toLowerCase()] = false; });
-
-function spawnEnemies() {
-    setInterval(() => {
-        const radius = 15;
-        let x, y;
-        // Nascer fora da tela
-        if (Math.random() < 0.5) {
-            x = Math.random() < 0.5 ? 0 - radius : canvas.width + radius;
-            y = Math.random() * canvas.height;
-        } else {
-            x = Math.random() * canvas.width;
-            y = Math.random() < 0.5 ? 0 - radius : canvas.height + radius;
-        }
-        enemies.push(new Enemy(x, y, 1.5 + (score / 500))); // Zumbis ficam mais rápidos com o tempo
-    }, 1000);
+if(right){
+camera.position.add(right.clone().multiplyScalar(-speed))
 }
 
-function animate() {
-    const animationId = requestAnimationFrame(animate);
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
-    player.update();
-    player.draw();
+renderer.render(scene,camera)
 
-    projectiles.forEach((p, pIndex) => {
-        p.update();
-        p.draw();
-        if (p.x < 0 || p.x > canvas.width || p.y < 0 || p.y > canvas.height) {
-            projectiles.splice(pIndex, 1);
-        }
-    });
-
-    enemies.forEach((enemy, eIndex) => {
-        enemy.update(player.x, player.y);
-        enemy.draw();
-
-        // Colisão Zumbi -> Jogador
-        const distToPlayer = Math.hypot(player.x - enemy.x, player.y - enemy.y);
-        if (distToPlayer - enemy.radius - player.radius < 1) {
-            player.takeDamage(20); // Perde 20 de vida
-            enemies.splice(eIndex, 1); // Zumbi morre ao morder
-        }
-
-        // Colisão Tiro -> Zumbi
-        projectiles.forEach((p, pIndex) => {
-            const distToProjectile = Math.hypot(p.x - enemy.x, p.y - enemy.y);
-            if (distToProjectile - enemy.radius - p.radius < 1) {
-                enemies.splice(eIndex, 1);
-                projectiles.splice(pIndex, 1);
-                score += 10;
-                scoreEl.innerHTML = score;
-            }
-        });
-    });
 }
-
-window.addEventListener('click', (event) => {
-    const angle = Math.atan2(event.clientY - player.y, event.clientX - player.x);
-    const velocity = { x: Math.cos(angle) * 8, y: Math.sin(angle) * 8 };
-    projectiles.push(new Projectile(player.x, player.y, velocity));
-});
-
-spawnEnemies();
-animate();
-</script>
-</body>
-</html>
