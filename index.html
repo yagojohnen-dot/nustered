@@ -1,139 +1,58 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <title>Jogo de Carro Simples</title>
-    <style>
-        body { margin: 0; padding: 0; overflow: hidden; background-color: #333; font-family: sans-serif; }
-        
-        .game-area {
-            width: 400px;
-            height: 100vh;
-            background-color: #555;
-            margin: 0 auto;
-            position: relative;
-            border-left: 10px dashed #fff;
-            border-right: 10px dashed #fff;
-            overflow: hidden;
-        }
+<div id="score" style="position: fixed; top: 10px; right: 10px; color: white; font-size: 24px; background: rgba(0,0,0,0.5); padding: 10px; border-radius: 5px;">
+    Pontos: 0
+</div>
+const car = document.getElementById('player');
+const obstacle = document.querySelector('.obstacle');
+const scoreElement = document.getElementById('score');
+const speed = 7;
 
-        .car {
-            width: 50px;
-            height: 80px;
-            background-color: red;
-            position: absolute;
-            /* Definimos valores iniciais via CSS, mas o JS controlará depois */
-            bottom: 20px;
-            left: 175px;
-            border-radius: 10px;
-            box-shadow: 0 5px 5px rgba(0,0,0,0.5);
-            transition: background 0.2s;
-        }
+let posX = 175;
+let posY = 20;
+let score = 0;
+let gameActive = true;
+const keys = {};
 
-        .obstacle {
-            width: 50px;
-            height: 50px;
-            background-color: yellow;
-            position: absolute;
-            top: -60px;
-            left: 175px;
-            border-radius: 5px;
-            animation: moveObstacle 2s linear infinite;
-        }
+window.addEventListener('keydown', (e) => keys[e.key.toLowerCase()] = true);
+window.addEventListener('keyup', (e) => keys[e.key.toLowerCase()] = false);
 
-        @keyframes moveObstacle {
-            0% { top: -60px; }
-            100% { top: 100vh; }
-        }
+function checkCollision(rect1, rect2) {
+    return !(
+        rect1.top > rect2.bottom ||
+        rect1.bottom < rect2.top ||
+        rect1.left > rect2.right ||
+        rect1.right < rect2.left
+    );
+}
 
-        .game-area::before {
-            content: '';
-            position: absolute;
-            width: 10px;
-            height: 200vh; /* Aumentado para não haver buraco na animação */
-            left: 50%;
-            top: -100vh;
-            transform: translateX(-50%);
-            background: repeating-linear-gradient(
-                to bottom,
-                #fff,
-                #fff 50px,
-                transparent 50px,
-                transparent 100px
-            );
-            animation: roadMove 0.5s linear infinite;
-        }
+function gameLoop() {
+    if (!gameActive) return; // Para o jogo se houver colisão
 
-        @keyframes roadMove {
-            0% { transform: translateX(-50%) translateY(0); }
-            100% { transform: translateX(-50%) translateY(100px); }
-        }
+    // Movimentação
+    if (keys['a'] && posX > 0) posX -= speed;
+    if (keys['d'] && posX < 350) posX += speed;
+    if (keys['w'] && posY < 500) posY += speed;
+    if (keys['s'] && posY > 0) posY -= speed;
 
-        .controls-info {
-            position: fixed;
-            top: 10px;
-            left: 10px;
-            color: white;
-            background: rgba(0,0,0,0.5);
-            padding: 10px;
-            border-radius: 5px;
-        }
-    </style>
-</head>
-<body>
+    car.style.left = posX + 'px';
+    car.style.bottom = posY + 'px';
 
-    <div class="controls-info">Use <b>W, A, S, D</b> para dirigir</div>
+    // Sistema de Pontos (Aumenta conforme o obstáculo reseta)
+    // O obstáculo reseta sozinho pela animação CSS, mas detectamos a posição aqui
+    const carRect = car.getBoundingClientRect();
+    const obsRect = obstacle.getBoundingClientRect();
 
-    <div class="game-area" id="road">
-        <div class="car" id="player"></div>
-        <div class="obstacle"></div>
-    </div>
+    // Detecção de Colisão
+    if (checkCollision(carRect, obsRect)) {
+        gameActive = false;
+        alert("Fim de Jogo! Pontuação: " + Math.floor(score));
+        location.reload(); // Reinicia o jogo
+    }
 
-    <script>
-        const car = document.getElementById('player');
-        const speed = 7; // Velocidade do movimento
-        
-        // Posição inicial
-        let posX = 175;
-        let posY = 20;
+    // Incrementar pontuação enquanto sobrevive
+    score += 0.1;
+    scoreElement.innerText = "Pontos: " + Math.floor(score);
 
-        // Rastrear teclas pressionadas
-        const keys = {};
+    requestAnimationFrame(gameLoop);
+}
 
-        window.addEventListener('keydown', (e) => {
-            keys[e.key.toLowerCase()] = true;
-        });
-
-        window.addEventListener('keyup', (e) => {
-            keys[e.key.toLowerCase()] = false;
-        });
-
-        function gameLoop() {
-            // Movimentação Lateral (A e D)
-            if (keys['a'] && posX > 0) {
-                posX -= speed;
-            }
-            if (keys['d'] && posX < 350) { // 400 da pista - 50 do carro
-                posX += speed;
-            }
-            
-            // Movimentação Vertical (W e S)
-            if (keys['w'] && posY < 500) { // Limite superior arbitrário
-                posY += speed;
-            }
-            if (keys['s'] && posY > 0) {
-                posY -= speed;
-            }
-
-            // Aplica as novas posições
-            car.style.left = posX + 'px';
-            car.style.bottom = posY + 'px';
-
-            requestAnimationFrame(gameLoop);
-        }
-
-        // Inicia o loop do jogo
-        gameLoop();
-    </script>
-</body>
-</html>
+gameLoop();
