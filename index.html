@@ -2,12 +2,12 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>FPS 3D - Com Arma e Recuo</title>
+    <title>FPS 3D - Sem Arma</title>
     <style>
         body { margin: 0; overflow: hidden; background-color: #333; font-family: sans-serif; }
         #crosshair {
             position: absolute; top: 50%; left: 50%;
-            width: 10px; height: 10px; border: 2px solid #0f0;
+            width: 12px; height: 12px; border: 2px solid #0f0;
             border-radius: 50%; transform: translate(-50%, -50%);
             pointer-events: none; z-index: 10;
         }
@@ -43,18 +43,17 @@
         import * as THREE from 'three';
 
         let scene, camera, renderer, score = 0;
-        let targets = [], gunGroup;
+        let targets = [];
         const keys = {};
         
-        // Física
         let verticalVelocity = 0;
         const gravity = 0.008, jumpForce = 0.18, playerHeight = 1.6;
         let canJump = true;
 
         function init() {
             scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x444444);
-            scene.fog = new THREE.Fog(0x444444, 0, 80);
+            scene.background = new THREE.Color(0x222222);
+            scene.fog = new THREE.Fog(0x222222, 0, 80);
 
             camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
             camera.position.set(0, playerHeight, 5);
@@ -63,37 +62,16 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
             document.body.appendChild(renderer.domElement);
 
-            // Luzes
             scene.add(new THREE.AmbientLight(0xffffff, 1));
             const sun = new THREE.DirectionalLight(0xffffff, 1.5);
             sun.position.set(5, 10, 7);
             scene.add(sun);
 
-            // Chão e Alvos
-            scene.add(new THREE.GridHelper(200, 60, 0x00ff00, 0x666666));
+            scene.add(new THREE.GridHelper(200, 60, 0x00ff00, 0x444444));
             for(let i=0; i<15; i++) spawnTarget();
 
-            // --- CRIAÇÃO DA ARMA ---
-            gunGroup = new THREE.Group();
-            
-            // Corpo da arma
-            const bodyGeo = new THREE.BoxGeometry(0.15, 0.2, 0.5);
-            const gunMat = new THREE.MeshStandardMaterial({ color: 0x222222 });
-            const gunBody = new THREE.Mesh(bodyGeo, gunMat);
-            
-            // Cano da arma
-            const barrelGeo = new THREE.BoxGeometry(0.08, 0.08, 0.4);
-            const gunBarrel = new THREE.Mesh(barrelGeo, gunMat);
-            gunBarrel.position.z = -0.3;
-            gunBarrel.position.y = 0.05;
-
-            gunGroup.add(gunBody);
-            gunGroup.add(gunBarrel);
-
-            // Posicionar arma em relação à câmera (mão direita)
-            gunGroup.position.set(0.3, -0.25, -0.5);
-            camera.add(gunGroup); 
-            scene.add(camera); // Importante: adicionar a câmera na cena para ver os filhos dela
+            // A arma foi removida daqui
+            scene.add(camera); 
 
             animate();
         }
@@ -108,7 +86,6 @@
             targets.push(mesh);
         }
 
-        // Mouse Lock e Olhar
         let yaw = 0, pitch = 0;
         document.addEventListener('mousemove', (e) => {
             if (document.pointerLockElement) {
@@ -122,22 +99,16 @@
         window.addEventListener('keydown', (e) => keys[e.code] = true);
         window.addEventListener('keyup', (e) => keys[e.code] = false);
 
-        // Tiro e Efeito de Recuo
         const raycaster = new THREE.Raycaster();
         window.addEventListener('mousedown', () => {
             if (!document.pointerLockElement) return;
 
-            // Animação de recuo (kickback)
-            gunGroup.position.z = -0.4;
-            gunGroup.rotation.x = 0.2;
-            setTimeout(() => {
-                gunGroup.position.z = -0.5;
-                gunGroup.rotation.x = 0;
-            }, 100);
-
+            // O efeito de recuo visual da arma foi removido
+            
             raycaster.setFromCamera(new THREE.Vector2(0,0), camera);
             const hits = raycaster.intersectObjects(targets);
             if (hits.length > 0) {
+                // "Reset" do alvo atingido
                 hits[0].object.position.set((Math.random()-0.5)*70, 0.75, (Math.random()-0.5)*70);
                 score += 10;
                 document.getElementById('score').innerText = score;
@@ -147,7 +118,6 @@
         function animate() {
             requestAnimationFrame(animate);
 
-            // Movimento
             const speed = 0.15;
             const dir = new THREE.Vector3();
             camera.getWorldDirection(dir);
@@ -159,7 +129,6 @@
             if (keys['KeyA']) camera.position.addScaledVector(side, speed);
             if (keys['KeyD']) camera.position.addScaledVector(side, -speed);
 
-            // Pulo
             if (keys['Space'] && canJump) {
                 verticalVelocity = jumpForce;
                 canJump = false;
