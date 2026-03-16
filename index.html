@@ -2,155 +2,195 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>FPS 3D - Sem Arma</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zombie Survival JS</title>
     <style>
-        body { margin: 0; overflow: hidden; background-color: #333; font-family: sans-serif; }
-        #crosshair {
-            position: absolute; top: 50%; left: 50%;
-            width: 12px; height: 12px; border: 2px solid #0f0;
-            border-radius: 50%; transform: translate(-50%, -50%);
-            pointer-events: none; z-index: 10;
+        body {
+            margin: 0;
+            background-color: #1a1a1a;
+            color: white;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
         }
+
+        canvas {
+            border: 4px solid #333;
+            background-color: #000;
+            cursor: crosshair;
+        }
+
         #ui {
-            position: absolute; top: 20px; left: 20px;
-            color: #0f0; font-size: 24px; pointer-events: none;
-            background: rgba(0,0,0,0.5); padding: 10px; border-radius: 5px;
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            pointer-events: none;
         }
-        #instructions {
-            position: absolute; top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            color: white; text-align: center;
-            background: rgba(0,0,0,0.9); padding: 30px; border: 2px solid #0f0;
-            z-index: 20;
-        }
+
+        .stat { font-size: 24px; margin-bottom: 5px; }
     </style>
 </head>
 <body>
 
-    <div id="ui">Score: <span id="score">0</span></div>
-    <div id="crosshair"></div>
-    <div id="instructions">
-        <h1>BATTLE 3D</h1>
-        <p>W, A, S, D - Mover | ESPAÇO - Pular<br>CLIQUE - Atirar</p>
-        <button onclick="startGame()" style="padding: 10px 25px; cursor: pointer; background: #0f0; border: none; font-weight: bold;">INICIAR</button>
+    <div id="ui">
+        <div class="stat">Pontos: <span id="score">0</span></div>
+        <div class="stat">Vida: <span id="health">100</span>%</div>
     </div>
 
-    <script type="importmap">
-        { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js" } }
-    </script>
+    <canvas id="gameCanvas"></canvas>
 
-    <script type="module">
-        import * as THREE from 'three';
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreElement = document.getElementById('score');
+        const healthElement = document.getElementById('health');
 
-        let scene, camera, renderer, score = 0;
-        let targets = [];
-        const keys = {};
-        
-        let verticalVelocity = 0;
-        const gravity = 0.008, jumpForce = 0.18, playerHeight = 1.6;
-        let canJump = true;
+        canvas.width = window.innerWidth * 0.8;
+        canvas.height = window.innerHeight * 0.8;
 
-        function init() {
-            scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x222222);
-            scene.fog = new THREE.Fog(0x222222, 0, 80);
+        // Estado do Jogo
+        let score = 0;
+        let health = 100;
+        let gameOver = false;
 
-            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.set(0, playerHeight, 5);
-
-            renderer = new THREE.WebGLRenderer({ antialias: true });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            document.body.appendChild(renderer.domElement);
-
-            scene.add(new THREE.AmbientLight(0xffffff, 1));
-            const sun = new THREE.DirectionalLight(0xffffff, 1.5);
-            sun.position.set(5, 10, 7);
-            scene.add(sun);
-
-            scene.add(new THREE.GridHelper(200, 60, 0x00ff00, 0x444444));
-            for(let i=0; i<15; i++) spawnTarget();
-
-            // A arma foi removida daqui
-            scene.add(camera); 
-
-            animate();
-        }
-
-        function spawnTarget() {
-            const mesh = new THREE.Mesh(
-                new THREE.BoxGeometry(1.5, 1.5, 1.5),
-                new THREE.MeshStandardMaterial({ color: 0xff0000, emissive: 0x220000 })
-            );
-            mesh.position.set((Math.random()-0.5)*70, 0.75, (Math.random()-0.5)*70);
-            scene.add(mesh);
-            targets.push(mesh);
-        }
-
-        let yaw = 0, pitch = 0;
-        document.addEventListener('mousemove', (e) => {
-            if (document.pointerLockElement) {
-                yaw -= e.movementX * 0.002;
-                pitch -= e.movementY * 0.002;
-                pitch = Math.max(-Math.PI/2, Math.min(Math.PI/2, pitch));
-                camera.rotation.set(pitch, yaw, 0, 'YXZ');
-            }
-        });
-
-        window.addEventListener('keydown', (e) => keys[e.code] = true);
-        window.addEventListener('keyup', (e) => keys[e.code] = false);
-
-        const raycaster = new THREE.Raycaster();
-        window.addEventListener('mousedown', () => {
-            if (!document.pointerLockElement) return;
-
-            // O efeito de recuo visual da arma foi removido
-            
-            raycaster.setFromCamera(new THREE.Vector2(0,0), camera);
-            const hits = raycaster.intersectObjects(targets);
-            if (hits.length > 0) {
-                // "Reset" do alvo atingido
-                hits[0].object.position.set((Math.random()-0.5)*70, 0.75, (Math.random()-0.5)*70);
-                score += 10;
-                document.getElementById('score').innerText = score;
-            }
-        });
-
-        function animate() {
-            requestAnimationFrame(animate);
-
-            const speed = 0.15;
-            const dir = new THREE.Vector3();
-            camera.getWorldDirection(dir);
-            dir.y = 0; dir.normalize();
-            const side = new THREE.Vector3().crossVectors(camera.up, dir).normalize();
-
-            if (keys['KeyW']) camera.position.addScaledVector(dir, speed);
-            if (keys['KeyS']) camera.position.addScaledVector(dir, -speed);
-            if (keys['KeyA']) camera.position.addScaledVector(side, speed);
-            if (keys['KeyD']) camera.position.addScaledVector(side, -speed);
-
-            if (keys['Space'] && canJump) {
-                verticalVelocity = jumpForce;
-                canJump = false;
-            }
-            camera.position.y += verticalVelocity;
-            if (camera.position.y > playerHeight) {
-                verticalVelocity -= gravity;
-            } else {
-                camera.position.y = playerHeight;
-                verticalVelocity = 0;
-                canJump = true;
-            }
-
-            renderer.render(scene, camera);
-        }
-
-        window.startGame = () => {
-            document.body.requestPointerLock();
-            document.getElementById('instructions').style.display = 'none';
+        const player = {
+            x: canvas.width / 2,
+            y: canvas.height / 2,
+            radius: 15,
+            color: '#3498db',
+            speed: 4
         };
 
-        init();
+        const projectiles = [];
+        const enemies = [];
+        const keys = {};
+
+        // Listeners de controles
+        window.addEventListener('keydown', e => keys[e.key.toLowerCase()] = true);
+        window.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
+        window.addEventListener('click', shoot);
+
+        function shoot(e) {
+            if (gameOver) return;
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            const angle = Math.atan2(mouseY - player.y, mouseX - player.x);
+            
+            projectiles.push({
+                x: player.x,
+                y: player.y,
+                radius: 5,
+                color: '#f1c40f',
+                velocity: {
+                    x: Math.cos(angle) * 10,
+                    y: Math.sin(angle) * 10
+                }
+            });
+        }
+
+        function spawnEnemy() {
+            if (gameOver) return;
+            const radius = 20;
+            let x, y;
+
+            if (Math.random() < 0.5) {
+                x = Math.random() < 0.5 ? 0 - radius : canvas.width + radius;
+                y = Math.random() * canvas.height;
+            } else {
+                x = Math.random() * canvas.width;
+                y = Math.random() < 0.5 ? 0 - radius : canvas.height + radius;
+            }
+
+            const angle = Math.atan2(player.y - y, player.x - x);
+            enemies.push({
+                x, y, radius, 
+                color: '#e74c3c',
+                velocity: {
+                    x: Math.cos(angle) * 1.5,
+                    y: Math.sin(angle) * 1.5
+                }
+            });
+        }
+
+        setInterval(spawnEnemy, 1000);
+
+        function animate() {
+            if (health <= 0) {
+                alert(`Fim de Jogo! Pontuação: ${score}`);
+                document.location.reload();
+                return;
+            }
+
+            requestAnimationFrame(animate);
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.2)'; // Efeito de rastro
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Movimentação Jogador
+            if (keys['w'] && player.y > 0) player.y -= player.speed;
+            if (keys['s'] && player.y < canvas.height) player.y += player.speed;
+            if (keys['a'] && player.x > 0) player.x -= player.speed;
+            if (keys['d'] && player.x < canvas.width) player.x += player.speed;
+
+            // Desenhar Jogador
+            ctx.beginPath();
+            ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
+            ctx.fillStyle = player.color;
+            ctx.fill();
+
+            // Lógica Projéteis
+            projectiles.forEach((p, index) => {
+                p.x += p.velocity.x;
+                p.y += p.velocity.y;
+
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                ctx.fillStyle = p.color;
+                ctx.fill();
+
+                // Remover se sair da tela
+                if (p.x < 0 || p.x > canvas.width || p.y < 0 || p.y > canvas.height) {
+                    projectiles.splice(index, 1);
+                }
+            });
+
+            // Lógica Inimigos
+            enemies.forEach((enemy, eIndex) => {
+                // Seguir jogador
+                const angle = Math.atan2(player.y - enemy.y, player.x - enemy.x);
+                enemy.x += Math.cos(angle) * 2;
+                enemy.y += Math.sin(angle) * 2;
+
+                ctx.beginPath();
+                ctx.arc(enemy.x, enemy.y, enemy.radius, 0, Math.PI * 2);
+                ctx.fillStyle = enemy.color;
+                ctx.fill();
+
+                // Colisão com Jogador
+                const distPlayer = Math.hypot(player.x - enemy.x, player.y - enemy.y);
+                if (distPlayer - enemy.radius - player.radius < 1) {
+                    health -= 0.5;
+                    healthElement.innerText = Math.floor(health);
+                }
+
+                // Colisão com Projéteis
+                projectiles.forEach((p, pIndex) => {
+                    const dist = Math.hypot(p.x - enemy.x, p.y - enemy.y);
+                    if (dist - enemy.radius - p.radius < 1) {
+                        score += 10;
+                        scoreElement.innerText = score;
+                        enemies.splice(eIndex, 1);
+                        projectiles.splice(pIndex, 1);
+                    }
+                });
+            });
+        }
+
+        animate();
     </script>
 </body>
 </html>
