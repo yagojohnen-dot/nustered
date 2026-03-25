@@ -3,246 +3,140 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Zombie Survival - Dark Edition</title>
+    <title>Palavra do Dia</title>
     <style>
         body {
-            margin: 0;
-            background-color: #000;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #121213;
             color: white;
-            font-family: 'Segoe UI', sans-serif;
-            overflow: hidden;
+        }
+
+        #game-board {
+            display: grid;
+            grid-template-rows: repeat(6, 1fr);
+            gap: 5px;
+            margin-top: 20px;
+        }
+
+        .row {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 5px;
+        }
+
+        .tile {
+            width: 50px;
+            height: 50px;
+            border: 2px solid #3a3a3c;
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
-        }
-
-        canvas {
-            border: 2px solid #333;
-            background-color: #000;
-            cursor: crosshair;
-            display: none;
-        }
-
-        #startMenu {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), 
-                        url('4-Space-Shooter-UI7.jpg') no-repeat center center;
-            background-size: cover;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 10;
-        }
-
-        .menu-box {
-            background: rgba(0, 0, 0, 0.9);
-            padding: 40px;
-            border: 2px solid #e74c3c;
-            border-radius: 10px;
-            text-align: center;
-            box-shadow: 0 0 30px rgba(231, 76, 60, 0.3);
-        }
-
-        #startButton {
-            padding: 15px 40px;
-            font-size: 24px;
-            background-color: #e74c3c;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
+            font-size: 2rem;
             font-weight: bold;
-            transition: 0.3s;
+            text-transform: uppercase;
         }
 
-        #startButton:hover {
-            background-color: #c0392b;
-            transform: scale(1.05);
-        }
+        /* Cores de feedback */
+        .correct { background-color: #538d4e; border-color: #538d4e; }
+        .present { background-color: #b59f3b; border-color: #b59f3b; }
+        .absent { background-color: #3a3a3c; border-color: #3a3a3c; }
 
-        #ui {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            pointer-events: none;
-            display: none;
+        #message {
+            margin-top: 20px;
+            font-weight: bold;
+            height: 24px;
         }
     </style>
 </head>
 <body>
 
-    <div id="startMenu">
-        <div class="menu-box">
-            <h1 style="color: #e74c3c; letter-spacing: 5px;">ZOMBIE VOID</h1>
-            <p>Sobreviva na escuridão. Cuidado com os mutantes roxos!</p>
-            <button id="startButton">INICIAR JOGO</button>
-        </div>
-    </div>
-
-    <div id="ui">
-        <div style="font-size: 24px; color: #f1c40f;">Pontos: <span id="score">0</span></div>
-        <div style="font-size: 24px; color: #e74c3c;">Vida: <span id="health">100</span>%</div>
-    </div>
-
-    <canvas id="gameCanvas"></canvas>
+    <h1>PALAVRA DO DIA</h1>
+    
+    <div id="game-board"></div>
+    <div id="message"></div>
 
     <script>
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-        const scoreElement = document.getElementById('score');
-        const healthElement = document.getElementById('health');
-        const startMenu = document.getElementById('startMenu');
-        const startButton = document.getElementById('startButton');
-        const uiElement = document.getElementById('ui');
+        const PALAVRA_CORRETA = "TERRA"; // Você pode mudar a palavra aqui
+        let tentativaAtual = 0;
+        let letraAtual = 0;
+        let grid = ["", "", "", "", "", ""];
 
-        canvas.width = window.innerWidth * 0.9;
-        canvas.height = window.innerHeight * 0.9;
+        const board = document.getElementById("game-board");
 
-        let score, health, gameOver, gameRunning = false;
-        let player, projectiles, enemies;
-        const keys = {};
-
-        function initGame() {
-            score = 0;
-            health = 100;
-            gameOver = false;
-            gameRunning = true;
-            player = { x: canvas.width / 2, y: canvas.height / 2, radius: 15, color: '#3498db', speed: 4 };
-            projectiles = [];
-            enemies = [];
-            
-            scoreElement.innerText = score;
-            healthElement.innerText = health;
-            canvas.style.display = 'block';
-            uiElement.style.display = 'block';
-            startMenu.style.display = 'none';
-            animate();
+        // Criar o tabuleiro
+        for (let i = 0; i < 6; i++) {
+            let row = document.createElement("div");
+            row.className = "row";
+            for (let j = 0; j < 5; j++) {
+                let tile = document.createElement("div");
+                tile.className = "tile";
+                tile.id = `tile-${i}-${j}`;
+                row.appendChild(tile);
+            }
+            board.appendChild(row);
         }
 
-        window.addEventListener('keydown', e => keys[e.key.toLowerCase()] = true);
-        window.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
-        window.addEventListener('click', shoot);
-        startButton.addEventListener('click', initGame);
+        // Escutar teclas
+        document.addEventListener("keydown", (e) => {
+            const tecla = e.key.toUpperCase();
 
-        function shoot(e) {
-            if (!gameRunning || gameOver) return;
-            const rect = canvas.getBoundingClientRect();
-            const angle = Math.atan2((e.clientY - rect.top) - player.y, (e.clientX - rect.left) - player.x);
-            projectiles.push({
-                x: player.x, y: player.y, radius: 5, color: '#f1c40f',
-                velocity: { x: Math.cos(angle) * 10, y: Math.sin(angle) * 10 }
-            });
+            if (tecla === "ENTER") {
+                verificarPalavra();
+            } else if (tecla === "BACKSPACE") {
+                apagarLetra();
+            } else if (/^[A-Z]$/.test(tecla) && letraAtual < 5) {
+                adicionarLetra(tecla);
+            }
+        });
+
+        function adicionarLetra(l) {
+            if (tentativaAtual < 6) {
+                const tile = document.getElementById(`tile-${tentativaAtual}-${letraAtual}`);
+                tile.innerText = l;
+                grid[tentativaAtual] += l;
+                letraAtual++;
+            }
         }
 
-        function spawnEnemy() {
-            if (!gameRunning || gameOver) return;
-            
-            const isBig = Math.random() < 0.2; // 20% chance de ser grande
-            const radius = isBig ? 35 : 20;
-            const enemyHealth = isBig ? 3 : 1;
-            const speed = isBig ? 1 : 2.2; 
-            const color = isBig ? '#8e44ad' : '#e74c3c';
+        function apagarLetra() {
+            if (letraAtual > 0) {
+                letraAtual--;
+                const tile = document.getElementById(`tile-${tentativaAtual}-${letraAtual}`);
+                tile.innerText = "";
+                grid[tentativaAtual] = grid[tentativaAtual].slice(0, -1);
+            }
+        }
 
-            let x, y;
-            if (Math.random() < 0.5) {
-                x = Math.random() < 0.5 ? 0 - radius : canvas.width + radius;
-                y = Math.random() * canvas.height;
+        function verificarPalavra() {
+            const palpite = grid[tentativaAtual];
+            if (palpite.length !== 5) return;
+
+            for (let i = 0; i < 5; i++) {
+                const tile = document.getElementById(`tile-${tentativaAtual}-${i}`);
+                const letra = palpite[i];
+
+                if (letra === PALAVRA_CORRETA[i]) {
+                    tile.classList.add("correct");
+                } else if (PALAVRA_CORRETA.includes(letra)) {
+                    tile.classList.add("present");
+                } else {
+                    tile.classList.add("absent");
+                }
+            }
+
+            if (palpite === PALAVRA_CORRETA) {
+                document.getElementById("message").innerText = "Parabéns! Você acertou! 🎉";
+                tentativaAtual = 7; // Bloqueia o jogo
             } else {
-                x = Math.random() * canvas.width;
-                y = Math.random() < 0.5 ? 0 - radius : canvas.height + radius;
-            }
-
-            const angle = Math.atan2(player.y - y, player.x - x);
-            enemies.push({
-                x, y, radius, color, speed, health: enemyHealth,
-                velocity: { x: Math.cos(angle) * speed, y: Math.sin(angle) * speed }
-            });
-        }
-
-        setInterval(spawnEnemy, 1000);
-
-        function animate() {
-            if (!gameRunning) return;
-
-            if (health <= 0) {
-                gameRunning = false;
-                alert(`GAME OVER! Pontuação final: ${score}`);
-                location.reload();
-                return;
-            }
-
-            requestAnimationFrame(animate);
-            
-            // Fundo Preto Sólido
-            ctx.fillStyle = '#000';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            // Movimento Jogador
-            if (keys['w'] && player.y > 0) player.y -= player.speed;
-            if (keys['s'] && player.y < canvas.height) player.y += player.speed;
-            if (keys['a'] && player.x > 0) player.x -= player.speed;
-            if (keys['d'] && player.x < canvas.width) player.x += player.speed;
-
-            // Desenhar Jogador
-            ctx.beginPath();
-            ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
-            ctx.fillStyle = player.color;
-            ctx.fill();
-            ctx.strokeStyle = 'rgba(255,255,255,0.3)';
-            ctx.stroke();
-
-            // Projéteis
-            projectiles.forEach((p, i) => {
-                p.x += p.velocity.x;
-                p.y += p.velocity.y;
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-                ctx.fillStyle = p.color;
-                ctx.fill();
-                if (p.x < 0 || p.x > canvas.width || p.y < 0 || p.y > canvas.height) projectiles.splice(i, 1);
-            });
-
-            // Inimigos
-            enemies.forEach((enemy, eIndex) => {
-                const angle = Math.atan2(player.y - enemy.y, player.x - enemy.x);
-                enemy.x += Math.cos(angle) * enemy.speed;
-                enemy.y += Math.sin(angle) * enemy.speed;
-
-                ctx.beginPath();
-                ctx.arc(enemy.x, enemy.y, enemy.radius, 0, Math.PI * 2);
-                ctx.fillStyle = enemy.color;
-                ctx.fill();
-                
-                // Se for o zumbi grande, desenha uma borda para indicar armadura
-                if (enemy.health > 1) {
-                    ctx.strokeStyle = '#fff';
-                    ctx.lineWidth = 3;
-                    ctx.stroke();
+                tentativaAtual++;
+                letraAtual = 0;
+                if (tentativaAtual === 6) {
+                    document.getElementById("message").innerText = `Fim de jogo! A palavra era ${PALAVRA_CORRETA}`;
                 }
-
-                // Colisão Jogador
-                if (Math.hypot(player.x - enemy.x, player.y - enemy.y) < player.radius + enemy.radius) {
-                    health -= 0.5;
-                    healthElement.innerText = Math.floor(health);
-                }
-
-                // Colisão Projétil
-                projectiles.forEach((p, pIndex) => {
-                    if (Math.hypot(p.x - enemy.x, p.y - enemy.y) < p.radius + enemy.radius) {
-                        projectiles.splice(pIndex, 1);
-                        enemy.health--; 
-
-                        if (enemy.health <= 0) {
-                            score += (enemy.radius > 30) ? 50 : 10;
-                            scoreElement.innerText = score;
-                            enemies.splice(eIndex, 1);
-                        }
-                    }
-                });
-            });
+            }
         }
     </script>
 </body>
