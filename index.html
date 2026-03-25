@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Zombie Survival - Grass Edition</title>
+    <title>Zombie Survival - Dark Edition</title>
     <style>
         body {
             margin: 0;
-            background-color: #1a1a1a;
+            background-color: #000;
             color: white;
             font-family: 'Segoe UI', sans-serif;
             overflow: hidden;
@@ -18,8 +18,8 @@
         }
 
         canvas {
-            border: 4px solid #2d5a27;
-            background-color: #4CAF50; /* Cor base do gramado */
+            border: 2px solid #333;
+            background-color: #000;
             cursor: crosshair;
             display: none;
         }
@@ -28,7 +28,7 @@
             position: absolute;
             width: 100%;
             height: 100%;
-            background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), 
+            background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), 
                         url('4-Space-Shooter-UI7.jpg') no-repeat center center;
             background-size: cover;
             display: flex;
@@ -38,22 +38,29 @@
         }
 
         .menu-box {
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(0, 0, 0, 0.9);
             padding: 40px;
-            border: 3px solid #4CAF50;
-            border-radius: 15px;
+            border: 2px solid #e74c3c;
+            border-radius: 10px;
             text-align: center;
+            box-shadow: 0 0 30px rgba(231, 76, 60, 0.3);
         }
 
         #startButton {
             padding: 15px 40px;
             font-size: 24px;
-            background-color: #4CAF50;
+            background-color: #e74c3c;
             color: white;
             border: none;
             border-radius: 5px;
             cursor: pointer;
             font-weight: bold;
+            transition: 0.3s;
+        }
+
+        #startButton:hover {
+            background-color: #c0392b;
+            transform: scale(1.05);
         }
 
         #ui {
@@ -62,7 +69,6 @@
             left: 20px;
             pointer-events: none;
             display: none;
-            text-shadow: 2px 2px #000;
         }
     </style>
 </head>
@@ -70,15 +76,15 @@
 
     <div id="startMenu">
         <div class="menu-box">
-            <h1 style="color: #4CAF50;">ZOMBIE GARDEN</h1>
-            <p>Zumbis Roxos são maiores e aguentam 3 tiros!</p>
-            <button id="startButton">INICIAR CAÇA</button>
+            <h1 style="color: #e74c3c; letter-spacing: 5px;">ZOMBIE VOID</h1>
+            <p>Sobreviva na escuridão. Cuidado com os mutantes roxos!</p>
+            <button id="startButton">INICIAR JOGO</button>
         </div>
     </div>
 
     <div id="ui">
-        <div style="font-size: 24px;">Pontos: <span id="score">0</span></div>
-        <div style="font-size: 24px;">Vida: <span id="health">100</span>%</div>
+        <div style="font-size: 24px; color: #f1c40f;">Pontos: <span id="score">0</span></div>
+        <div style="font-size: 24px; color: #e74c3c;">Vida: <span id="health">100</span>%</div>
     </div>
 
     <canvas id="gameCanvas"></canvas>
@@ -96,21 +102,8 @@
         canvas.height = window.innerHeight * 0.9;
 
         let score, health, gameOver, gameRunning = false;
-        let player, projectiles, enemies, grassPatches;
+        let player, projectiles, enemies;
         const keys = {};
-
-        // Criar grama aleatória para o fundo
-        function createGrassTexture() {
-            grassPatches = [];
-            for (let i = 0; i < 100; i++) {
-                grassPatches.push({
-                    x: Math.random() * canvas.width,
-                    y: Math.random() * canvas.height,
-                    width: Math.random() * 3 + 2,
-                    height: Math.random() * 10 + 5
-                });
-            }
-        }
 
         function initGame() {
             score = 0;
@@ -120,7 +113,6 @@
             player = { x: canvas.width / 2, y: canvas.height / 2, radius: 15, color: '#3498db', speed: 4 };
             projectiles = [];
             enemies = [];
-            createGrassTexture();
             
             scoreElement.innerText = score;
             healthElement.innerText = health;
@@ -148,12 +140,11 @@
         function spawnEnemy() {
             if (!gameRunning || gameOver) return;
             
-            // Lógica do Zumbi Grande (20% de chance)
-            const isBig = Math.random() < 0.2;
+            const isBig = Math.random() < 0.2; // 20% chance de ser grande
             const radius = isBig ? 35 : 20;
             const enemyHealth = isBig ? 3 : 1;
-            const speed = isBig ? 0.8 : 2; // Zumbi grande é mais lento
-            const color = isBig ? '#8e44ad' : '#e74c3c'; // Roxo para o grande
+            const speed = isBig ? 1 : 2.2; 
+            const color = isBig ? '#8e44ad' : '#e74c3c';
 
             let x, y;
             if (Math.random() < 0.5) {
@@ -173,41 +164,35 @@
 
         setInterval(spawnEnemy, 1000);
 
-        function drawBackground() {
-            // Fundo verde escuro
-            ctx.fillStyle = '#388E3C';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            // Desenhar "folhas" de grama
-            ctx.fillStyle = '#4CAF50';
-            grassPatches.forEach(patch => {
-                ctx.fillRect(patch.x, patch.y, patch.width, patch.height);
-            });
-        }
-
         function animate() {
             if (!gameRunning) return;
 
             if (health <= 0) {
                 gameRunning = false;
-                alert(`FIM DE JOGO! Você protegeu o jardim e fez ${score} pontos.`);
+                alert(`GAME OVER! Pontuação final: ${score}`);
                 location.reload();
                 return;
             }
 
             requestAnimationFrame(animate);
-            drawBackground();
+            
+            // Fundo Preto Sólido
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // Jogador
+            // Movimento Jogador
             if (keys['w'] && player.y > 0) player.y -= player.speed;
             if (keys['s'] && player.y < canvas.height) player.y += player.speed;
             if (keys['a'] && player.x > 0) player.x -= player.speed;
             if (keys['d'] && player.x < canvas.width) player.x += player.speed;
 
+            // Desenhar Jogador
             ctx.beginPath();
             ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
             ctx.fillStyle = player.color;
             ctx.fill();
+            ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+            ctx.stroke();
 
             // Projéteis
             projectiles.forEach((p, i) => {
@@ -231,24 +216,24 @@
                 ctx.fillStyle = enemy.color;
                 ctx.fill();
                 
-                // Borda para o zumbi grande parecer mais forte
-                if (enemy.radius > 30) {
-                    ctx.strokeStyle = 'white';
-                    ctx.lineWidth = 2;
+                // Se for o zumbi grande, desenha uma borda para indicar armadura
+                if (enemy.health > 1) {
+                    ctx.strokeStyle = '#fff';
+                    ctx.lineWidth = 3;
                     ctx.stroke();
                 }
 
-                // Dano no jogador
+                // Colisão Jogador
                 if (Math.hypot(player.x - enemy.x, player.y - enemy.y) < player.radius + enemy.radius) {
                     health -= 0.5;
                     healthElement.innerText = Math.floor(health);
                 }
 
-                // Hit no inimigo
+                // Colisão Projétil
                 projectiles.forEach((p, pIndex) => {
                     if (Math.hypot(p.x - enemy.x, p.y - enemy.y) < p.radius + enemy.radius) {
                         projectiles.splice(pIndex, 1);
-                        enemy.health--; // Tira 1 de vida
+                        enemy.health--; 
 
                         if (enemy.health <= 0) {
                             score += (enemy.radius > 30) ? 50 : 10;
