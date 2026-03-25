@@ -3,22 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Palavra do Dia</title>
+    <title>Palavra do Dia - Infinito</title>
     <style>
+        :root {
+            --bg: #121213;
+            --tile-border: #3a3a3c;
+            --correct: #538d4e;
+            --present: #b59f3b;
+            --absent: #3a3a3c;
+        }
+
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
-            background-color: #121213;
+            background-color: var(--bg);
             color: white;
+            margin: 0;
+            padding: 20px;
         }
 
         #game-board {
             display: grid;
             grid-template-rows: repeat(6, 1fr);
             gap: 5px;
-            margin-top: 20px;
+            margin-bottom: 20px;
         }
 
         .row {
@@ -28,77 +38,97 @@
         }
 
         .tile {
-            width: 50px;
-            height: 50px;
-            border: 2px solid #3a3a3c;
+            width: 55px;
+            height: 55px;
+            border: 2px solid var(--tile-border);
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 2rem;
+            font-size: 1.8rem;
             font-weight: bold;
             text-transform: uppercase;
+            transition: transform 0.1s;
         }
 
-        /* Cores de feedback */
-        .correct { background-color: #538d4e; border-color: #538d4e; }
-        .present { background-color: #b59f3b; border-color: #b59f3b; }
-        .absent { background-color: #3a3a3c; border-color: #3a3a3c; }
+        .correct { background-color: var(--correct); border-color: var(--correct); }
+        .present { background-color: var(--present); border-color: var(--present); }
+        .absent { background-color: var(--absent); border-color: var(--absent); }
 
         #message {
-            margin-top: 20px;
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+            height: 30px;
+            color: #ffd700;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: var(--correct);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
             font-weight: bold;
-            height: 24px;
         }
     </style>
 </head>
 <body>
 
     <h1>PALAVRA DO DIA</h1>
-    
-    <div id="game-board"></div>
     <div id="message"></div>
+    <div id="game-board"></div>
+    <button onclick="reiniciar()">Novo Jogo</button>
 
     <script>
-        const PALAVRA_CORRETA = "TERRA"; // Você pode mudar a palavra aqui
+        // LISTA DE PALAVRAS (Adicione quantas quiser aqui!)
+        const LISTA_PALAVRAS = [
+            "TERRA", "PLANO", "SAGAZ", "NOBRE", "IDEIA", 
+            "AUDAS", "PODER", "MUNDO", "VIVER", "JUSTO",
+            "SONHO", "TEMPO", "VALOR", "FORTE", "BRAVO"
+        ];
+
+        let palavraCorreta = "";
         let tentativaAtual = 0;
         let letraAtual = 0;
         let grid = ["", "", "", "", "", ""];
+        let jogoAtivo = true;
 
-        const board = document.getElementById("game-board");
-
-        // Criar o tabuleiro
-        for (let i = 0; i < 6; i++) {
-            let row = document.createElement("div");
-            row.className = "row";
-            for (let j = 0; j < 5; j++) {
-                let tile = document.createElement("div");
-                tile.className = "tile";
-                tile.id = `tile-${i}-${j}`;
-                row.appendChild(tile);
-            }
-            board.appendChild(row);
+        function iniciarJogo() {
+            // Sorteia uma palavra da lista
+            palavraCorreta = LISTA_PALAVRAS[Math.floor(Math.random() * LISTA_PALAVRAS.length)].toUpperCase();
+            desenharTabuleiro();
         }
 
-        // Escutar teclas
-        document.addEventListener("keydown", (e) => {
-            const tecla = e.key.toUpperCase();
-
-            if (tecla === "ENTER") {
-                verificarPalavra();
-            } else if (tecla === "BACKSPACE") {
-                apagarLetra();
-            } else if (/^[A-Z]$/.test(tecla) && letraAtual < 5) {
-                adicionarLetra(tecla);
+        function desenharTabuleiro() {
+            const board = document.getElementById("game-board");
+            board.innerHTML = ""; // Limpa para reiniciar
+            for (let i = 0; i < 6; i++) {
+                let row = document.createElement("div");
+                row.className = "row";
+                for (let j = 0; j < 5; j++) {
+                    let tile = document.createElement("div");
+                    tile.className = "tile";
+                    tile.id = `tile-${i}-${j}`;
+                    row.appendChild(tile);
+                }
+                board.appendChild(row);
             }
+        }
+
+        document.addEventListener("keydown", (e) => {
+            if (!jogoAtivo) return;
+            
+            const tecla = e.key.toUpperCase();
+            if (tecla === "ENTER") verificarPalavra();
+            if (tecla === "BACKSPACE") apagarLetra();
+            if (/^[A-ZÁ-Ú]$/.test(tecla) && letraAtual < 5) adicionarLetra(tecla);
         });
 
         function adicionarLetra(l) {
-            if (tentativaAtual < 6) {
-                const tile = document.getElementById(`tile-${tentativaAtual}-${letraAtual}`);
-                tile.innerText = l;
-                grid[tentativaAtual] += l;
-                letraAtual++;
-            }
+            const tile = document.getElementById(`tile-${tentativaAtual}-${letraAtual}`);
+            tile.innerText = l;
+            grid[tentativaAtual] += l;
+            letraAtual++;
         }
 
         function apagarLetra() {
@@ -114,30 +144,53 @@
             const palpite = grid[tentativaAtual];
             if (palpite.length !== 5) return;
 
+            const arrayCorreta = palavraCorreta.split("");
+            
+            // Primeira passada: marcar Verdes (Correto)
             for (let i = 0; i < 5; i++) {
                 const tile = document.getElementById(`tile-${tentativaAtual}-${i}`);
-                const letra = palpite[i];
-
-                if (letra === PALAVRA_CORRETA[i]) {
+                if (palpite[i] === palavraCorreta[i]) {
                     tile.classList.add("correct");
-                } else if (PALAVRA_CORRETA.includes(letra)) {
+                    arrayCorreta[i] = null; // Remove para não contar no amarelo
+                }
+            }
+
+            // Segunda passada: marcar Amarelos e Cinzas
+            for (let i = 0; i < 5; i++) {
+                const tile = document.getElementById(`tile-${tentativaAtual}-${i}`);
+                if (tile.classList.contains("correct")) continue;
+
+                if (arrayCorreta.includes(palpite[i])) {
                     tile.classList.add("present");
+                    arrayCorreta[arrayCorreta.indexOf(palpite[i])] = null;
                 } else {
                     tile.classList.add("absent");
                 }
             }
 
-            if (palpite === PALAVRA_CORRETA) {
-                document.getElementById("message").innerText = "Parabéns! Você acertou! 🎉";
-                tentativaAtual = 7; // Bloqueia o jogo
+            if (palpite === palavraCorreta) {
+                document.getElementById("message").innerText = "Incrível! Você venceu! 🏆";
+                jogoAtivo = false;
             } else {
                 tentativaAtual++;
                 letraAtual = 0;
                 if (tentativaAtual === 6) {
-                    document.getElementById("message").innerText = `Fim de jogo! A palavra era ${PALAVRA_CORRETA}`;
+                    document.getElementById("message").innerText = `Fim! Era: ${palavraCorreta}`;
+                    jogoAtivo = false;
                 }
             }
         }
+
+        function reiniciar() {
+            tentativaAtual = 0;
+            letraAtual = 0;
+            grid = ["", "", "", "", "", ""];
+            jogoAtivo = true;
+            document.getElementById("message").innerText = "";
+            iniciarJogo();
+        }
+
+        iniciarJogo();
     </script>
 </body>
 </html>
